@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>DanceTimes 記事投稿プレビュー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Serif+JP:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:          #f7f6f3;
+      --bg-card:     #ffffff;
+      --border:      #e0ddd8;
+      --text:        #1a1a1a;
+      --text-sub:    #777068;
+      --accent:      #6ec9c1;
+      --accent-dark: #3a9e96;
+      --accent-soft: rgba(110,201,193,0.13);
+      --gold:        #c9a96e;
+      --radius:      2px;
+      --font-display:'Cormorant Garamond','Noto Serif JP',serif;
+      --font-body:   'Noto Serif JP',serif;
+      --font-mono:   'DM Mono',monospace;
+      --font-ui:     system-ui,-apple-system,sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-ui);
+      background: #eeecea;
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== TOP BAR ===== */
+    .topbar {
+      background: #1a1a1a;
+      color: #fff;
+      padding: 0 24px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      gap: 16px;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-logo {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+    }
+    .topbar-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888;
+      padding: 2px 8px;
+      border: 1px solid #333;
+      border-radius: 999px;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-topbar {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-draft {
+      background: #333;
+      color: #ccc;
+    }
+    .btn-draft:hover { background: #444; }
+    .btn-publish {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-publish:hover { background: var(--accent-dark); }
+
+    /* ===== LAYOUT ===== */
+    .layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      height: calc(100vh - 48px);
+    }
+
+    /* ===== EDITOR PANEL ===== */
+    .editor-panel {
+      background: #f0efec;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .editor-section-title {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+    .field-label .required {
+      color: #e05;
+      margin-left: 2px;
+    }
+    .field-input,
+    .field-select,
+    .field-textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-input:focus,
+    .field-select:focus,
+    .field-textarea:focus {
+      border-color: var(--accent);
+    }
+    .field-textarea {
+      resize: vertical;
+      min-height: 320px;
+      line-height: 1.8;
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .field-meta {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    /* status badges */
+    .status-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .status-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .status-btn.active-draft {
+      border-color: var(--gold);
+      background: rgba(201,169,110,0.1);
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .status-btn.active-publish {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-weight: 600;
+    }
+
+    /* photo upload */
+    .photo-drop {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--bg-card);
+    }
+    .photo-drop:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .photo-drop-text {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+    .photo-preview-thumb {
+      width: 100%;
+      max-height: 120px;
+      object-fit: cover;
+      border-radius: var(--radius);
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* char counter */
+    .char-counter {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-sub);
+      text-align: right;
+      margin-top: 2px;
+    }
+
+    /* ===== PREVIEW PANEL ===== */
+    .preview-panel {
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    /* preview header */
+    .preview-bar {
+      background: rgba(247,246,243,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .preview-bar-title {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .preview-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .preview-device-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .device-btn {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .device-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+    }
+
+    /* article preview */
+    .preview-wrap {
+      padding: 40px 32px 80px;
+      transition: max-width 0.3s ease;
+    }
+    .preview-wrap.mobile {
+      max-width: 390px;
+      margin: 0 auto;
+    }
+
+    .article-preview {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* article header */
+    .art-header {
+      padding: 32px 36px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .art-category-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .art-category {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .art-category::before {
+      content: '';
+      display: block;
+      width: 16px; height: 1px;
+      background: var(--accent);
+    }
+    .art-lang {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .art-lang.en {
+      background: rgba(201,169,110,0.12);
+      color: var(--gold);
+    }
+    .art-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 400;
+      line-height: 1.3;
+      color: var(--text);
+      margin-bottom: 20px;
+      letter-spacing: 0.02em;
+    }
+    .art-title-placeholder {
+      color: #ccc;
+      font-style: italic;
+    }
+    .art-meta-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .art-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .art-meta-label {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+    }
+    .art-meta-value {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text);
+      letter-spacing: 0.04em;
+    }
+
+    /* article photo */
+    .art-photo {
+      width: 100%;
+      max-height: 400px;
+      object-fit: cover;
+      display: none;
+    }
+    .art-photo.visible { display: block; }
+
+    /* article body */
+    .art-body {
+      padding: 32px 36px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      line-height: 2;
+      color: var(--text);
+      min-height: 200px;
+    }
+    .art-body-placeholder {
+      color: #ccc;
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+    .art-body p {
+      margin-bottom: 1.4em;
+    }
+
+    /* article footer */
+    .art-footer {
+      padding: 20px 36px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .art-author {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+    }
+    .art-status-badge {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .badge-draft {
+      background: rgba(201,169,110,0.12);
+      color: var(--gold);
+      border: 1px solid rgba(201,169,110,0.3);
+    }
+    .badge-published {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      border: 1px solid var(--accent-line);
+    }
+
+    /* empty state */
+    .preview-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      gap: 10px;
+      color: var(--text-sub);
+    }
+    .preview-empty-icon { font-size: 2rem; opacity: 0.3; }
+    .preview-empty-text {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+      z-index: 300;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .editor-panel {
+        height: auto;
+        max-height: none;
+      }
+      .preview-panel {
+        border-top: 2px solid var(--accent);
+      }
+    }
+    @media (max-width: 600px) {
+      .topbar { padding: 0 14px; }
+      .topbar-logo { font-size: 0.85rem; }
+      .art-header, .art-body, .art-footer { padding-left: 20px; padding-right: 20px; }
+      .preview-wrap { padding: 20px 16px 60px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== TOP BAR ===== -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">The Dance Times</span>
+      <span class="topbar-label">投稿プレビュー</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-topbar btn-draft" id="btn-save-draft">下書き保存</button>
+      <button class="btn-topbar btn-publish" id="btn-open-form">Googleフォームで投稿 →</button>
+    </div>
+  </div>
+
+  <!-- ===== MAIN LAYOUT ===== -->
+  <div class="layout">
+
+    <!-- ===== EDITOR PANEL ===== -->
+    <div class="editor-panel">
+
+      <!-- 基本情報 -->
+      <div>
+        <div class="editor-section-title">基本情報</div>
+
+        <div class="field-group">
+          <label class="field-label" for="f-title">タイトル <span class="required">*</span></label>
+          <input class="field-input" id="f-title" type="text" placeholder="例：東京バレエ団『白鳥の湖』" />
+        </div>
+
+        <div class="field-row" style="margin-top:10px;">
+          <div class="field-group">
+            <label class="field-label" for="f-category">カテゴリ <span class="required">*</span></label>
+            <select class="field-select" id="f-category">
+              <option value="">選択してください</option>
+              <option value="舞台評">舞台評</option>
+              <option value="月間ベストダンサー">月間ベストダンサー</option>
+              <option value="レポート">レポート</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="f-language">言語 <span class="required">*</span></label>
+            <select class="field-select" id="f-language">
+              <option value="ja">日本語（ja）</option>
+              <option value="en">英語（en）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 公演情報 -->
+      <div>
+        <div class="editor-section-title">公演情報</div>
+
+        <div class="field-group">
+          <label class="field-label" for="f-venue">会場</label>
+          <input class="field-input" id="f-venue" type="text" placeholder="例：東京文化会館" />
+        </div>
+
+        <div class="field-row" style="margin-top:10px;">
+          <div class="field-group">
+            <label class="field-label" for="f-perf-date">公演日</label>
+            <input class="field-input" id="f-perf-date" type="date" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="f-perf-time">公演時間</label>
+            <input class="field-input" id="f-perf-time" type="text" placeholder="例：14:00" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 本文 -->
+      <div>
+        <div class="editor-section-title">本文</div>
+        <div class="field-group">
+          <label class="field-label" for="f-body">本文 <span class="required">*</span></label>
+          <textarea class="field-textarea" id="f-body"
+            placeholder="記事本文を入力してください。段落は空行で区切ってください。"></textarea>
+          <div class="char-counter"><span id="char-count">0</span> 文字</div>
+        </div>
+      </div>
+
+      <!-- 執筆者・公開設定 -->
+      <div>
+        <div class="editor-section-title">執筆者・公開設定</div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label class="field-label" for="f-author">執筆者名 <span class="required">*</span></label>
+            <input class="field-input" id="f-author" type="text" placeholder="例：隅田有" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="f-publish-date">公開日 <span class="required">*</span></label>
+            <input class="field-input" id="f-publish-date" type="date" />
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <div class="field-label" style="margin-bottom:6px;">公開フラグ</div>
+          <div class="status-row">
+            <button class="status-btn active-draft" id="btn-status-draft" onclick="setStatus('draft')">
+              下書き
+            </button>
+            <button class="status-btn" id="btn-status-publish" onclick="setStatus('published')">
+              公開
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 写真 -->
+      <div>
+        <div class="editor-section-title">写真（任意）</div>
+        <div class="photo-drop" id="photo-drop" onclick="document.getElementById('f-photo').click()">
+          <div class="photo-drop-text">📷　クリックして写真を選択</div>
+          <div class="field-meta" style="margin-top:6px;">JPG / PNG / WebP　最大10MB</div>
+          <img class="photo-preview-thumb" id="photo-thumb" alt="プレビュー" />
+        </div>
+        <input type="file" id="f-photo" accept="image/*" style="display:none" />
+      </div>
+
+    </div><!-- /editor-panel -->
+
+    <!-- ===== PREVIEW PANEL ===== -->
+    <div class="preview-panel">
+
+      <div class="preview-bar">
+        <div class="preview-bar-title">
+          <span class="preview-dot"></span>
+          リアルタイムプレビュー
+        </div>
+        <div class="preview-device-btns">
+          <button class="device-btn active" id="btn-pc" onclick="setDevice('pc')">PC</button>
+          <button class="device-btn" id="btn-sp" onclick="setDevice('sp')">スマホ</button>
+        </div>
+      </div>
+
+      <div class="preview-wrap" id="preview-wrap">
+        <div class="article-preview" id="article-preview">
+
+          <!-- photo -->
+          <img class="art-photo" id="prev-photo" alt="" />
+
+          <!-- header -->
+          <div class="art-header">
+            <div class="art-category-row">
+              <span class="art-category" id="prev-category">カテゴリ</span>
+              <span class="art-lang" id="prev-lang">JA</span>
+            </div>
+            <h1 class="art-title art-title-placeholder" id="prev-title">タイトルを入力してください</h1>
+            <div class="art-meta-grid">
+              <div class="art-meta-item">
+                <span class="art-meta-label">公開日</span>
+                <span class="art-meta-value" id="prev-publish-date">──</span>
+              </div>
+              <div class="art-meta-item" id="prev-venue-wrap">
+                <span class="art-meta-label">会場</span>
+                <span class="art-meta-value" id="prev-venue">──</span>
+              </div>
+              <div class="art-meta-item" id="prev-perf-wrap">
+                <span class="art-meta-label">公演日時</span>
+                <span class="art-meta-value" id="prev-perf">──</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- body -->
+          <div class="art-body" id="prev-body">
+            <p class="art-body-placeholder">本文を入力するとここにプレビューが表示されます。</p>
+          </div>
+
+          <!-- footer -->
+          <div class="art-footer">
+            <span class="art-author" id="prev-author">執筆者：──</span>
+            <span class="art-status-badge badge-draft" id="prev-status-badge">下書き</span>
+          </div>
+
+        </div><!-- /article-preview -->
+      </div><!-- /preview-wrap -->
+
+    </div><!-- /preview-panel -->
+
+  </div><!-- /layout -->
+
+  <!-- toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── state ──────────────────────────────────────────────────────────────
+    let currentStatus = 'draft';
+    let currentDevice = 'pc';
+    let photoDataUrl   = null;
+
+    // ── helpers ────────────────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    function showToast(msg, duration = 2200) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), duration);
+    }
+
+    function formatDate(val) {
+      if (!val) return '──';
+      const d = new Date(val);
+      return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function bodyToHtml(text) {
+      if (!text.trim()) return '<p class="art-body-placeholder">本文を入力するとここにプレビューが表示されます。</p>';
+      return text.split(/\n\n+/)
+        .map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`)
+        .join('');
+    }
+
+    // ── update preview ─────────────────────────────────────────────────────
+    function updatePreview() {
+      const title       = $('f-title').value.trim();
+      const category    = $('f-category').value;
+      const language    = $('f-language').value;
+      const body        = $('f-body').value;
+      const author      = $('f-author').value.trim();
+      const publishDate = $('f-publish-date').value;
+      const perfDate    = $('f-perf-date').value;
+      const perfTime    = $('f-perf-time').value.trim();
+      const venue       = $('f-venue').value.trim();
+
+      // title
+      const titleEl = $('prev-title');
+      if (title) {
+        titleEl.textContent = title;
+        titleEl.classList.remove('art-title-placeholder');
+      } else {
+        titleEl.textContent = 'タイトルを入力してください';
+        titleEl.classList.add('art-title-placeholder');
+      }
+
+      // category
+      $('prev-category').textContent = category || 'カテゴリ';
+
+      // language
+      const langEl = $('prev-lang');
+      langEl.textContent = language === 'en' ? 'EN' : 'JA';
+      langEl.className = 'art-lang' + (language === 'en' ? ' en' : '');
+
+      // body
+      $('prev-body').innerHTML = bodyToHtml(body);
+
+      // char count
+      $('char-count').textContent = body.length.toLocaleString();
+
+      // author
+      $('prev-author').textContent = author ? `執筆者：${author}` : '執筆者：──';
+
+      // publish date
+      $('prev-publish-date').textContent = formatDate(publishDate);
+
+      // venue
+      $('prev-venue').textContent = venue || '──';
+
+      // perf date+time
+      let perfStr = '──';
+      if (perfDate) {
+        perfStr = formatDate(perfDate);
+        if (perfTime) perfStr += ' ' + perfTime;
+      }
+      $('prev-perf').textContent = perfStr;
+
+      // status badge
+      const badge = $('prev-status-badge');
+      if (currentStatus === 'published') {
+        badge.textContent = '公開';
+        badge.className = 'art-status-badge badge-published';
+      } else {
+        badge.textContent = '下書き';
+        badge.className = 'art-status-badge badge-draft';
+      }
+
+      // photo
+      const photoEl = $('prev-photo');
+      if (photoDataUrl) {
+        photoEl.src = photoDataUrl;
+        photoEl.classList.add('visible');
+      } else {
+        photoEl.classList.remove('visible');
+      }
+    }
+
+    // ── status toggle ──────────────────────────────────────────────────────
+    function setStatus(s) {
+      currentStatus = s;
+      $('btn-status-draft').className   = 'status-btn' + (s === 'draft'     ? ' active-draft'   : '');
+      $('btn-status-publish').className = 'status-btn' + (s === 'published' ? ' active-publish' : '');
+      updatePreview();
+    }
+
+    // ── device toggle ──────────────────────────────────────────────────────
+    function setDevice(d) {
+      currentDevice = d;
+      $('btn-pc').className = 'device-btn' + (d === 'pc' ? ' active' : '');
+      $('btn-sp').className = 'device-btn' + (d === 'sp' ? ' active' : '');
+      $('preview-wrap').classList.toggle('mobile', d === 'sp');
+    }
+
+    // ── photo upload ───────────────────────────────────────────────────────
+    $('f-photo').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('⚠️ 10MBを超えるファイルは選択できません');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        photoDataUrl = ev.target.result;
+        const thumb = $('photo-thumb');
+        thumb.src = photoDataUrl;
+        thumb.style.display = 'block';
+        updatePreview();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ── draft save (localStorage) ──────────────────────────────────────────
+    function getDraftData() {
+      return {
+        title:       $('f-title').value,
+        category:    $('f-category').value,
+        language:    $('f-language').value,
+        body:        $('f-body').value,
+        author:      $('f-author').value,
+        publishDate: $('f-publish-date').value,
+        perfDate:    $('f-perf-date').value,
+        perfTime:    $('f-perf-time').value,
+        venue:       $('f-venue').value,
+        status:      currentStatus,
+        savedAt:     new Date().toISOString(),
+      };
+    }
+
+    $('btn-save-draft').addEventListener('click', () => {
+      const data = getDraftData();
+      // sessionStorageを使用（ページを閉じると消える）
+      sessionStorage.setItem('dancetimes-draft', JSON.stringify(data));
+      showToast('✓ 下書きを保存しました');
+    });
+
+    // restore draft on load
+    const saved = sessionStorage.getItem('dancetimes-draft');
+    if (saved) {
+      try {
+        const d = JSON.parse(saved);
+        $('f-title').value        = d.title       || '';
+        $('f-category').value     = d.category    || '';
+        $('f-language').value     = d.language    || 'ja';
+        $('f-body').value         = d.body        || '';
+        $('f-author').value       = d.author      || '';
+        $('f-publish-date').value = d.publishDate || '';
+        $('f-perf-date').value    = d.perfDate    || '';
+        $('f-perf-time').value    = d.perfTime    || '';
+        $('f-venue').value        = d.venue       || '';
+        if (d.status) setStatus(d.status);
+      } catch(e) {}
+    }
+
+    // ── open Google Form ───────────────────────────────────────────────────
+    $('btn-open-form').addEventListener('click', () => {
+      // ★ ここにGoogleフォームのURLを設定してください
+      const FORM_URL = 'https://docs.google.com/forms/d/YOUR_FORM_ID/viewform';
+      showToast('Googleフォームを開きます...');
+      setTimeout(() => window.open(FORM_URL, '_blank'), 800);
+    });
+
+    // ── live update ────────────────────────────────────────────────────────
+    ['f-title','f-category','f-language','f-body',
+     'f-author','f-publish-date','f-perf-date','f-perf-time','f-venue']
+      .forEach(id => {
+        $(id).addEventListener('input', updatePreview);
+        $(id).addEventListener('change', updatePreview);
+      });
+
+    // ── init ───────────────────────────────────────────────────────────────
+    // set today as default publish date
+    if (!$('f-publish-date').value) {
+      $('f-publish-date').value = new Date().toISOString().split('T')[0];
+    }
+    updatePreview();
+  </script>
+
+</body>
+</html>
