@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Dance Times | ダンス批評とレビューのサイト</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="The Dance Times は、日本の舞台に登場してくる舞踊を批評し、未来に繋げていくダンスレビューサイトです。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Serif+JP:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== TOKENS ===== */
+    :root {
+      --bg:           #f7f6f3;
+      --bg-card:      #ffffff;
+      --border:       #e0ddd8;
+      --text:         #1a1a1a;
+      --text-sub:     #777068;
+      --accent:       #6ec9c1;        /* tiffany blue */
+      --accent-dark:  #3a9e96;
+      --accent-soft:  rgba(110,201,193,0.13);
+      --accent-line:  rgba(110,201,193,0.5);
+      --gold:         #c9a96e;
+      --radius:       2px;
+      --shadow:       0 2px 24px rgba(0,0,0,0.07);
+      --shadow-lg:    0 8px 48px rgba(0,0,0,0.10);
+      --font-display: 'Cormorant Garamond', 'Noto Serif JP', serif;
+      --font-body:    'Noto Serif JP', serif;
+      --font-mono:    'DM Mono', monospace;
+      --max-w:        1080px;
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+    /* ===== LAYOUT ===== */
+    .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ===== HEADER ===== */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(247,246,243,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 16px 0; gap: 20px;
+    }
+    .logo {
+      display: flex; align-items: baseline; gap: 10px;
+      flex-shrink: 0;
+    }
+    .logo-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+    nav {
+      display: flex; align-items: center; gap: 24px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .nav-link {
+      color: var(--text-sub);
+      position: relative;
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute; left: 0; bottom: -1px;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 0.25s ease;
+    }
+    .nav-link:hover { color: var(--text); }
+    .nav-link:hover::after { width: 100%; }
+
+    /* hamburger */
+    .nav-toggle {
+      display: none;
+      flex-direction: column; gap: 5px;
+      width: 24px; padding: 4px 0;
+    }
+    .nav-toggle span {
+      display: block; height: 1px;
+      background: var(--text);
+      transition: all 0.3s;
+    }
+
+    /* ===== HERO ===== */
+    .hero { padding: 48px 0 24px; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 40px;
+      align-items: start;
+    }
+
+    /* hero left */
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-dark);
+      margin-bottom: 16px;
+    }
+    .hero-eyebrow::before {
+      content: '';
+      display: block; width: 24px; height: 1px;
+      background: var(--accent);
+    }
+    .hero-h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 300;
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+    .hero-h1 em {
+      font-style: italic;
+      color: var(--accent-dark);
+    }
+    .hero-lead {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      line-height: 1.85;
+      max-width: 520px;
+      margin-bottom: 28px;
+    }
+    .hero-actions {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 22px;
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: var(--radius);
+      transition: background 0.2s, transform 0.15s;
+      box-shadow: 0 4px 16px rgba(110,201,193,0.35);
+    }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 20px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-sub);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: var(--radius);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .hero-note {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      line-height: 1.8;
+      letter-spacing: 0.04em;
+    }
+
+    /* hero right panel */
+    .hero-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .panel-head {
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .panel-head-title {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .panel-badge {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .panel-list { list-style: none; }
+    .panel-item {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    .panel-item:last-child { border-bottom: none; }
+    .panel-item:hover { background: var(--accent-soft); }
+    .panel-item a {
+      display: block;
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.45;
+      margin-bottom: 4px;
+      transition: color 0.15s;
+    }
+    .panel-item:hover a { color: var(--accent-dark); }
+    .panel-meta {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-sub);
+      letter-spacing: 0.06em;
+    }
+
+    /* ===== TOOLBAR ===== */
+    .toolbar-wrap {
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin: 8px 0;
+    }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      align-items: center; justify-content: space-between;
+    }
+    .search-box {
+      position: relative;
+      flex: 1 1 260px;
+      max-width: 380px;
+    }
+    .search-icon {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      pointer-events: none;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 8px 14px 8px 34px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input:focus { border-color: var(--accent); }
+    .search-box input::placeholder { color: var(--text-sub); }
+
+    .chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .chip {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      transition: all 0.15s;
+    }
+    .chip:hover, .chip--active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-weight: 600;
+    }
+
+    /* ===== SECTIONS ===== */
+    .section { padding: 32px 0; }
+    .section + .section { border-top: 1px solid var(--border); }
+
+    .section-head {
+      display: flex; align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px; gap: 12px;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      color: var(--text);
+    }
+    .section-title-en {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-left: 10px;
+    }
+    .section-link {
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-dark);
+      display: flex; align-items: center; gap: 4px;
+      flex-shrink: 0;
+    }
+    .section-link::after { content: '→'; }
+
+    /* ===== CATEGORY COLUMNS ===== */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .cat-col {
+      background: var(--bg-card);
+      padding: 18px 16px;
+    }
+    .cat-col-head {
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid var(--accent);
+    }
+    .cat-col-title {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .cat-col-sub {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+    }
+    .cat-list { list-style: none; }
+    .cat-item {
+      padding: 8px 0;
+      border-bottom: 1px dotted var(--border);
+    }
+    .cat-item:last-child { border-bottom: none; }
+    .cat-item a {
+      display: block;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: var(--text);
+      margin-bottom: 3px;
+      transition: color 0.15s;
+    }
+    .cat-item a:hover { color: var(--accent-dark); }
+    .cat-meta {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-sub);
+      letter-spacing: 0.04em;
+    }
+
+    /* english column accent */
+    .cat-col--en .cat-col-head { border-bottom-color: var(--gold); }
+    .cat-col--en .cat-col-title { color: var(--gold); }
+
+    /* ===== ARCHIVE STRIP ===== */
+    .archive-strip {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .archive-strip-left { display: flex; align-items: center; gap: 16px; }
+    .archive-icon {
+      width: 40px; height: 40px;
+      background: var(--accent-soft);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .archive-text-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .archive-text-sub {
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      color: var(--text-sub);
+      letter-spacing: 0.06em;
+    }
+
+    /* ===== ABOUT ===== */
+    .about-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+    .about-body {
+      font-size: 0.88rem;
+      line-height: 1.9;
+      color: var(--text-sub);
+    }
+    .about-body + .about-body { margin-top: 12px; }
+    .about-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .stat-cell {
+      background: var(--bg-card);
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 300;
+      color: var(--accent-dark);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .footer-inner {
+      padding: 20px 0;
+      display: flex; flex-wrap: wrap;
+      justify-content: space-between; align-items: center;
+      gap: 12px;
+    }
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      letter-spacing: 0.08em;
+    }
+    .footer-links {
+      display: flex; gap: 20px; flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--accent-dark); }
+
+    /* ===== PAGE-LOAD ANIMATION ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-left  { animation: fadeUp 0.7s ease both; }
+    .hero-panel { animation: fadeUp 0.7s 0.15s ease both; }
+    .toolbar-wrap { animation: fadeUp 0.5s 0.25s ease both; }
+    .section    { animation: fadeUp 0.5s 0.3s ease both; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-panel { max-width: 480px; }
+      .cat-grid  { grid-template-columns: repeat(2, 1fr); }
+      .about-inner { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 0 16px; }
+      .header-inner { flex-wrap: nowrap; }
+      nav { display: none; flex-direction: column; gap: 0; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg); border-bottom: 1px solid var(--border); padding: 8px 0; }
+      nav.open { display: flex; }
+      .nav-toggle { display: flex; }
+      .cat-grid { grid-template-columns: 1fr; }
+      .archive-strip { flex-direction: column; align-items: flex-start; }
+      .section-head { flex-direction: column; gap: 6px; align-items: flex-start; }
+      nav .nav-link { padding: 12px 24px; width: 100%; }
+      nav .nav-link::after { display: none; }
+    }
+    @media (max-width: 400px) {
+      .hero-h1 { font-size: 1.7rem; }
+      .about-stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap">
+      <div class="header-inner">
+        <a href="/" class="logo">
+          <span class="logo-title">The Dance Times</span>
+          <span class="logo-sub">Dance Review</span>
+        </a>
+        <nav id="main-nav">
+          <a href="#latest"     class="nav-link">最新の記事</a>
+          <a href="#categories" class="nav-link">カテゴリ</a>
+          <a href="#archive"    class="nav-link">アーカイブ</a>
+          <a href="#about"      class="nav-link">このサイトについて</a>
+          <a href="#contact"    class="nav-link">連絡先</a>
+        </nav>
+        <button class="nav-toggle" id="nav-toggle" aria-label="メニュー">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+
+          <!-- left -->
+          <div class="hero-left">
+            <div class="hero-eyebrow">Dance Review &amp; Criticism — Japan</div>
+            <h1 class="hero-h1">
+              日本の舞台に登場する<br />
+              <em>ダンスの「いま」</em>を<br />
+              言葉にします。
+            </h1>
+            <p class="hero-lead">
+              The Dance Times は、バレエ／コンテンポラリー／邦舞など、
+              ジャンルを横断して舞踊の現在形を追いかけるレビューサイトです。
+              公演レポート、月間ベストダンサー、インタビューなどを、
+              観客として／書き手としての視点からお届けします。
+            </p>
+            <div class="hero-actions">
+              <a href="#latest"       class="btn-primary">最新の記事を読む</a>
+              <a href="#best-dancer"  class="btn-secondary">月間ベストダンサー</a>
+            </div>
+            <p class="hero-note">
+              ※ 本サイトは広告なし・新プラットフォーム版です。<br />
+              過去記事アーカイブは順次こちらからご案内していきます。
+            </p>
+          </div>
+
+          <!-- right: latest highlights -->
+          <aside class="hero-panel" aria-label="注目記事">
+            <div class="panel-head">
+              <span class="panel-head-title">Latest Highlights</span>
+              <span class="panel-badge">本日更新</span>
+            </div>
+            <ul class="panel-list">
+              <li class="panel-item">
+                <a href="#">英国ロイヤル・バレエ団『眠れる森の美女』</a>
+                <div class="panel-meta">2025.09.12 ── 舞台評</div>
+              </li>
+              <li class="panel-item">
+                <a href="#">コンテンポラリーダンス「xxxx」舞台裏レポート</a>
+                <div class="panel-meta">2025.09.08 ── 公演レポート</div>
+              </li>
+              <li class="panel-item">
+                <a href="#">月間ベストダンサー（2025年10月）</a>
+                <div class="panel-meta">2025.10.01 ── Monthly Best</div>
+              </li>
+              <li class="panel-item">
+                <a href="#">新国立劇場『白鳥の湖』記者会見レポート</a>
+                <div class="panel-meta">2025.09.20 ── 記者会見</div>
+              </li>
+            </ul>
+          </aside>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SEARCH & FILTER ===== -->
+    <div class="toolbar-wrap" id="latest">
+      <div class="wrap">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="search"
+              placeholder="作品名・ダンサー名・劇場名などで検索"
+              aria-label="記事検索" id="search-input" />
+          </div>
+          <div class="chips" role="group" aria-label="カテゴリフィルタ">
+            <button class="chip chip--active" data-cat="all">すべて</button>
+            <button class="chip" data-cat="best">月間ベスト</button>
+            <button class="chip" data-cat="review">舞台評</button>
+            <button class="chip" data-cat="report">レポート</button>
+            <button class="chip" data-cat="en">English</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CATEGORIES ===== -->
+    <section class="section" id="categories">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="section-title">Sections</span>
+            <span class="section-title-en">カテゴリ別の最新記事</span>
+          </div>
+          <a href="/articles" class="section-link">すべての記事</a>
+        </div>
+
+        <div class="cat-grid">
+
+          <!-- 月間ベスト -->
+          <div class="cat-col">
+            <header class="cat-col-head">
+              <div class="cat-col-title">Monthly Best</div>
+              <div class="cat-col-sub">月間ベストダンサー</div>
+            </header>
+            <ul class="cat-list">
+              <li class="cat-item">
+                <a href="#">月間ベストダンサー（2025年10月）</a>
+                <div class="cat-meta">2025.11.01</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">月間ベストダンサー（2025年9月）</a>
+                <div class="cat-meta">2025.10.01</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">月間ベストダンサー（2025年8月）</a>
+                <div class="cat-meta">2025.09.01</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- 舞台評 -->
+          <div class="cat-col">
+            <header class="cat-col-head">
+              <div class="cat-col-title">Reviews</div>
+              <div class="cat-col-sub">舞台評・批評</div>
+            </header>
+            <ul class="cat-list">
+              <li class="cat-item">
+                <a href="#">東京バレエ団『白鳥の湖』</a>
+                <div class="cat-meta">2025.09.05 ── 東京文化会館</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">Noism『トリプルビル』</a>
+                <div class="cat-meta">2025.09.04 ── さいたま</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">K-ballet『くるみ割り人形』</a>
+                <div class="cat-meta">2025.08.22 ── オーチャード</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- レポート -->
+          <div class="cat-col">
+            <header class="cat-col-head">
+              <div class="cat-col-title">Report</div>
+              <div class="cat-col-sub">公演レポート・会見・取材</div>
+            </header>
+            <ul class="cat-list">
+              <li class="cat-item">
+                <a href="#">新作バレエ制作記者会見レポート</a>
+                <div class="cat-meta">2025.09.03 ── 記者会見</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">コンテンポラリーダンス「xxxx」舞台裏</a>
+                <div class="cat-meta">2025.08.28 ── バックステージ</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">若手振付家インタビュー</a>
+                <div class="cat-meta">2025.08.15 ── インタビュー</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Reviews EN -->
+          <div class="cat-col cat-col--en">
+            <header class="cat-col-head">
+              <div class="cat-col-title">Reviews (EN)</div>
+              <div class="cat-col-sub">English-language reviews</div>
+            </header>
+            <ul class="cat-list">
+              <li class="cat-item">
+                <a href="#">Royal Ballet "Sleeping Beauty" — Review</a>
+                <div class="cat-meta">2025.09.12 ── Tokyo</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">Tokyo Ballet "Swan Lake" — Review</a>
+                <div class="cat-meta">2025.09.05 ── Tokyo Bunka Kaikan</div>
+              </li>
+              <li class="cat-item">
+                <a href="#">Noism "Triple Bill" — Report</a>
+                <div class="cat-meta">2025.09.04 ── Saitama</div>
+              </li>
+            </ul>
+          </div>
+
+        </div><!-- /cat-grid -->
+      </div>
+    </section>
+
+    <!-- ===== ARCHIVE STRIP ===== -->
+    <section class="section" id="archive">
+      <div class="wrap">
+        <div class="archive-strip">
+          <div class="archive-strip-left">
+            <div class="archive-icon">📁</div>
+            <div>
+              <div class="archive-text-title">過去記事アーカイブ</div>
+              <div class="archive-text-sub">旧サイト掲載の1,000件以上の記事を順次公開中</div>
+            </div>
+          </div>
+          <a href="/archive" class="btn-secondary">アーカイブを見る</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ABOUT ===== -->
+    <section class="section" id="about">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="section-title">About</span>
+          <span class="section-title-en">このサイトについて</span>
+        </div>
+        <div class="about-inner">
+          <div>
+            <p class="about-body">
+              The Dance Times は、日本の舞台芸術、とくにダンスを中心とした批評・レビューサイトです。
+              バレエ・コンテンポラリー・ストリートなどジャンルを問わず、舞踊の現在形をリアルタイムで追いかけます。
+            </p>
+            <p class="about-body" style="margin-top:12px;">
+              旧ブログで公開してきた記事に加えて、新プラットフォームでは広告表示のない読みやすい環境で、
+              より長期的にアーカイブを残していくことを目指しています。
+              一部の批評は英語でもお読みいただけます。
+            </p>
+          </div>
+          <div class="about-stats">
+            <div class="stat-cell">
+              <div class="stat-num">1,000<span style="font-size:1.2rem">+</span></div>
+              <div class="stat-label">Past Articles</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num">2010</div>
+              <div class="stat-label">Since</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num">月1</div>
+              <div class="stat-label">Best Dancer</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num">EN</div>
+              <div class="stat-label">English Reviews</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CONTACT ===== 
+    <section class="section" id="contact">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="section-title">Contact</span>
+          <span class="section-title-en">連絡先</span>
+        </div>
+        <div class="archive-strip">
+          <div class="archive-strip-left">
+            <div class="archive-icon">✉️</div>
+            <div>
+              <div class="archive-text-title">公演レビュー・取材依頼</div>
+              <div class="archive-text-sub">
+                一般のコメント・感想はお受けしておりません。公演レビュー・取材依頼専用の窓口です。
+              </div>
+            </div>
+          </div>
+          <a href="/contact" class="btn-secondary">お問い合わせフォーム</a>
+        </div>
+      </div>
+    </section> -->
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="wrap">
+      <div class="footer-inner">
+        <div class="footer-copy">© <span id="year"></span> The Dance Times</div>
+        <nav class="footer-links">
+          <a href="#about">このサイトについて</a>
+          <a href="#categories">カテゴリ</a>
+          <a href="#archive">アーカイブ</a>
+<!--
+          <a href="#contact">連絡先</a> -->
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<script>
+  // year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // hamburger
+  const toggle = document.getElementById('nav-toggle');
+  const nav    = document.getElementById('main-nav');
+  toggle.addEventListener('click', () => {
+    nav.classList.toggle('open');
+  });
+
+  // chip filter (UI only — real filter wired to Cloudflare Workers later)
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip--active'));
+      chip.classList.add('chip--active');
+    });
+  });
+
+  // search (placeholder — wired to API later)
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const q = e.target.value.trim();
+      if (q) window.location.href = `/search?q=${encodeURIComponent(q)}`;
+    }
+  });
+</script>
+</body>
+</html>
