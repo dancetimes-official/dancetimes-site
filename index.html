@@ -572,6 +572,95 @@
       padding: 32px;
     }
 
+    /* ===== ARCHIVE SECTION ===== */
+    .arc-filters {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .arc-filter-row {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    }
+    .arc-filter-label {
+      font-family: var(--font-mono); font-size: 0.6rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-sub); flex-shrink: 0; margin-right: 2px;
+    }
+    .arc-chip {
+      padding: 4px 11px;
+      border: 1px solid var(--border); border-radius: 999px;
+      background: var(--bg-card);
+      font-family: var(--font-mono); font-size: 0.63rem;
+      letter-spacing: 0.06em; color: var(--text-sub);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .arc-chip:hover, .arc-chip--active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-dark); font-weight: 600;
+    }
+    .arc-total {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.06em; color: var(--text-sub);
+    }
+    .arc-group-head {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0 8px;
+      border-bottom: 2px solid var(--border);
+      margin-top: 24px;
+    }
+    .arc-group-head:first-child { margin-top: 0; }
+    .arc-group-title {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--text);
+    }
+    .arc-group-count {
+      font-family: var(--font-mono); font-size: 0.6rem;
+      color: var(--text-sub); letter-spacing: 0.04em;
+    }
+    .arc-list { list-style: none; }
+    .arc-item {
+      padding: 10px 8px; margin: 0 -8px;
+      border-bottom: 1px dotted var(--border);
+      border-radius: var(--radius);
+      transition: background 0.12s;
+    }
+    .arc-item:last-child { border-bottom: none; }
+    .arc-item:hover { background: var(--accent-soft); }
+    .arc-item-main {
+      display: flex; justify-content: space-between;
+      align-items: baseline; gap: 12px; margin-bottom: 4px;
+    }
+    .arc-item-title {
+      font-size: 0.88rem; line-height: 1.4; color: var(--text);
+      flex: 1; transition: color 0.12s;
+    }
+    .arc-item:hover .arc-item-title { color: var(--accent-dark); }
+    .arc-item-date {
+      font-family: var(--font-mono); font-size: 0.6rem;
+      color: var(--text-sub); white-space: nowrap; flex-shrink: 0;
+    }
+    .arc-item-sub {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .arc-item-cat {
+      background: var(--accent-soft); color: var(--accent-dark);
+      padding: 1px 7px; border-radius: 999px;
+      font-family: var(--font-mono); font-size: 0.58rem;
+    }
+    .arc-item-venue {
+      font-family: var(--font-mono); font-size: 0.6rem; color: var(--text-sub);
+    }
+    .arc-search-note {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.08em; color: var(--accent-dark);
+      margin-bottom: 16px; padding: 8px 14px;
+      background: var(--accent-soft); border-radius: var(--radius);
+    }
+    @media (max-width: 640px) {
+      .arc-item-main { flex-wrap: wrap; gap: 4px; }
+      .arc-item-date { order: -1; }
+    }
+
     /* ===== PAGE-LOAD ANIMATION ===== */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
@@ -624,7 +713,7 @@
           <a href="#categories" class="nav-link">カテゴリ</a>
           <a href="#archive"    class="nav-link">アーカイブ</a>
           <a href="#about"      class="nav-link">このサイトについて</a>
-          <a href="#contact"    class="nav-link">連絡先</a>
+     <!-- <a href="#contact"    class="nav-link">連絡先</a>  -->
         </nav>
         <button class="nav-toggle" id="nav-toggle" aria-label="メニュー">
           <span></span><span></span><span></span>
@@ -771,18 +860,33 @@
       </div>
     </section>
 
-    <!-- ===== ARCHIVE STRIP ===== -->
+    <!-- ===== ARCHIVE ===== -->
     <section class="section" id="archive">
       <div class="wrap">
-        <div class="archive-strip">
-          <div class="archive-strip-left">
-            <div class="archive-icon">📁</div>
-            <div>
-              <div class="archive-text-title">過去記事アーカイブ</div>
-              <div class="archive-text-sub">旧サイト掲載の1,000件以上の記事を順次公開中</div>
+        <div class="section-head">
+          <div>
+            <span class="section-title">Archive</span>
+            <span class="section-title-en">過去記事アーカイブ</span>
+          </div>
+          <span class="arc-total" id="arc-total"></span>
+        </div>
+
+        <div class="arc-filters">
+          <div class="arc-filter-row" id="arc-year-row">
+            <div class="api-loading" style="padding:4px 0">
+              <div class="api-spinner"></div>
             </div>
           </div>
-          <a href="/archive" class="btn-secondary">アーカイブを見る</a>
+          <div class="arc-filter-row" id="arc-month-row" hidden></div>
+        </div>
+
+        <div id="archive-list">
+          <div class="api-state">
+            <div class="api-loading">
+              <div class="api-spinner"></div>
+              アーカイブを読み込み中
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -873,58 +977,61 @@
 <script>
   // ── year & hamburger ──────────────────────────────────────────────────────
   document.getElementById('year').textContent = new Date().getFullYear();
-
-  const toggle = document.getElementById('nav-toggle');
+  const toggle  = document.getElementById('nav-toggle');
   const mainNav = document.getElementById('main-nav');
   toggle.addEventListener('click', () => mainNav.classList.toggle('open'));
 
-  // ── API ───────────────────────────────────────────────────────────────────
-  const API_URL = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
-  let allArticles = [];
-  let currentCat = 'all';
-  let currentSearch = '';
+  // ── 共通定数・状態 ────────────────────────────────────────────────────────
+  const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
 
-  function getCatKey(article) {
-    const lang = (article.language || '').toLowerCase();
+  let allArticles  = [];
+  let allArchive   = [];
+  let currentCat   = 'all';
+  let currentSearch = '';
+  let arcYear      = 'all';   // ロード後に最新年に更新
+  let arcMonth     = 'all';   // 数値 or 'all'
+
+  // ── 共通ユーティリティ ────────────────────────────────────────────────────
+  function getCatKey(a) {
+    const lang = (a.language || '').toLowerCase();
     if (lang === 'english' || lang === 'en') return 'en';
-    const cat = article.category || '';
+    const cat = a.category || '';
     if (cat.includes('月間ベスト') || cat.includes('ベストダンサー')) return 'best';
     if (cat.includes('舞台評') || cat.includes('批評') || cat.includes('レビュー')) return 'review';
     if (cat.includes('レポート') || cat.includes('インタビュー') || cat.includes('取材')) return 'report';
     return 'other';
   }
 
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  function formatDate(s) {
+    if (!s) return '';
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return s;
+    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
   }
 
-  function esc(str) {
-    return String(str ?? '')
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  function renderCard(article) {
-    const catKey = getCatKey(article);
-    const dateStr = formatDate(article.publishDate || article.timestamp);
-    const perfDate = article.performanceDate ? formatDate(article.performanceDate) : '';
-    const venueStr = article.venue
-      ? (perfDate ? `${perfDate} ── ${esc(article.venue)}` : esc(article.venue))
-      : '';
+  // ── 最新記事セクション ─────────────────────────────────────────────────────
+  function renderCard(a) {
+    const catKey  = getCatKey(a);
+    const dateStr = formatDate(a.publishDate || a.timestamp);
+    const perfDate = a.performanceDate ? formatDate(a.performanceDate) : '';
+    const venueStr = a.venue ? (perfDate ? `${perfDate} ── ${esc(a.venue)}` : esc(a.venue)) : '';
     return `
       <article class="art-card" data-cat="${catKey}">
-        ${article.photo ? `<div class="art-card-img"><img src="${esc(article.photo)}" alt="${esc(article.title)}" loading="lazy"></div>` : ''}
+        ${a.photo ? `<div class="art-card-img"><img src="${esc(a.photo)}" alt="${esc(a.title)}" loading="lazy"></div>` : ''}
         <div class="art-card-body">
           <div class="art-card-meta">
-            ${article.category ? `<span class="art-card-cat">${esc(article.category)}</span>` : ''}
+            ${a.category ? `<span class="art-card-cat">${esc(a.category)}</span>` : ''}
             <span>${esc(dateStr)}</span>
           </div>
-          <h3 class="art-card-title">${esc(article.title)}</h3>
+          <h3 class="art-card-title">${esc(a.title)}</h3>
           ${venueStr ? `<div class="art-card-venue">${venueStr}</div>` : ''}
-          ${article.author ? `<div class="art-card-author">${esc(article.author)}</div>` : ''}
+          ${a.author ? `<div class="art-card-author">${esc(a.author)}</div>` : ''}
         </div>
       </article>`;
   }
@@ -934,7 +1041,7 @@
     return allArticles.filter(a => {
       if (currentCat !== 'all' && getCatKey(a) !== currentCat) return false;
       if (q) {
-        const text = [a.title, a.category, a.author, a.venue, a.body].join(' ').toLowerCase();
+        const text = [a.title, a.category, a.author, a.venue].join(' ').toLowerCase();
         if (!text.includes(q)) return false;
       }
       return true;
@@ -942,7 +1049,7 @@
   }
 
   function renderGrid() {
-    const grid = document.getElementById('articles-grid');
+    const grid     = document.getElementById('articles-grid');
     const filtered = filterArticles();
     if (filtered.length === 0) {
       grid.innerHTML = '<div class="api-state"><div class="api-empty">該当する記事がありません。</div></div>';
@@ -959,25 +1066,17 @@
       list.innerHTML = '<li class="panel-item"><span style="color:var(--text-sub);font-size:0.8rem;padding:12px 0;display:block">記事がありません</span></li>';
       return;
     }
-    list.innerHTML = latest.map(a => {
-      const dateStr = formatDate(a.publishDate || a.timestamp);
-      return `
-        <li class="panel-item">
-          <a href="#">${esc(a.title)}</a>
-          <div class="panel-meta">${esc(dateStr)} ── ${esc(a.category || '')}</div>
-        </li>`;
-    }).join('');
+    list.innerHTML = latest.map(a => `
+      <li class="panel-item">
+        <a href="#">${esc(a.title)}</a>
+        <div class="panel-meta">${esc(formatDate(a.publishDate || a.timestamp))} ── ${esc(a.category || '')}</div>
+      </li>`).join('');
   }
 
   function renderCatGrid() {
-    const mapping = {
-      best: 'cat-list-best',
-      review: 'cat-list-review',
-      report: 'cat-list-report',
-      en: 'cat-list-en',
-    };
+    const mapping = { best:'cat-list-best', review:'cat-list-review', report:'cat-list-report', en:'cat-list-en' };
     Object.entries(mapping).forEach(([key, id]) => {
-      const list = document.getElementById(id);
+      const list  = document.getElementById(id);
       if (!list) return;
       const items = allArticles.filter(a => getCatKey(a) === key).slice(0, 3);
       if (items.length === 0) {
@@ -985,12 +1084,11 @@
         return;
       }
       list.innerHTML = items.map(a => {
-        const dateStr = formatDate(a.publishDate || a.timestamp);
         const venue = a.venue ? ` ── ${esc(a.venue)}` : '';
         return `
           <li class="cat-item">
             <a href="#">${esc(a.title)}</a>
-            <div class="cat-meta">${esc(dateStr)}${venue}</div>
+            <div class="cat-meta">${esc(formatDate(a.publishDate || a.timestamp))}${venue}</div>
           </li>`;
       }).join('');
     });
@@ -998,16 +1096,15 @@
 
   async function loadArticles() {
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(API_BASE + '/articles');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       allArticles = await res.json();
       renderGrid();
       renderHeroPanel();
       renderCatGrid();
     } catch (err) {
-      const grid = document.getElementById('articles-grid');
-      grid.innerHTML = `<div class="api-state"><div class="api-error">記事の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
-      // cat-grid のプレースホルダー
+      document.getElementById('articles-grid').innerHTML =
+        `<div class="api-state"><div class="api-error">記事の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
       ['cat-list-best','cat-list-review','cat-list-report','cat-list-en'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '<li class="cat-item"><span style="color:var(--text-sub);font-size:0.8rem">読み込み失敗</span></li>';
@@ -1015,7 +1112,179 @@
     }
   }
 
-  // ── chip filter ───────────────────────────────────────────────────────────
+  // ── アーカイブセクション ────────────────────────────────────────────────────
+  function renderArcItem(a) {
+    const dateStr = formatDate(a.originalDate);
+    return `
+      <li class="arc-item">
+        <div class="arc-item-main">
+          <span class="arc-item-title">${esc(a.title)}</span>
+          <span class="arc-item-date">${esc(dateStr)}</span>
+        </div>
+        <div class="arc-item-sub">
+          ${a.category ? `<span class="arc-item-cat">${esc(a.category)}</span>` : ''}
+          ${a.venue    ? `<span class="arc-item-venue">${esc(a.venue)}</span>`  : ''}
+        </div>
+      </li>`;
+  }
+
+  function getArcGroupKey(item) {
+    const date = item.originalDate || '';
+    if (arcYear === 'all') {
+      const y = date.slice(0, 4);
+      return y ? y + '年' : '不明';
+    }
+    const m = parseInt(date.slice(5, 7));
+    return isNaN(m) ? '不明' : m + '月';
+  }
+
+  function renderArchive() {
+    const container = document.getElementById('archive-list');
+    const totalEl   = document.getElementById('arc-total');
+    if (!container) return;
+
+    let items = allArchive;
+    const q = currentSearch.toLowerCase();
+
+    if (q) {
+      // 検索モード：年月フィルタを無視して全件検索
+      items = allArchive.filter(a => {
+        const text = [a.title, a.category, a.author, a.venue].join(' ').toLowerCase();
+        return text.includes(q);
+      });
+      if (totalEl) totalEl.textContent = `${items.length} 件`;
+      if (items.length === 0) {
+        container.innerHTML = '<div class="api-state"><div class="api-empty">該当するアーカイブ記事がありません。</div></div>';
+        return;
+      }
+      const sorted = [...items].sort((a, b) => (b.originalDate||'').localeCompare(a.originalDate||''));
+      container.innerHTML =
+        `<p class="arc-search-note">「${esc(currentSearch)}」に一致: ${items.length}件</p>` +
+        `<ul class="arc-list">${sorted.map(renderArcItem).join('')}</ul>`;
+      return;
+    }
+
+    // 年フィルタ
+    if (arcYear !== 'all') {
+      items = items.filter(a => a.originalDate && a.originalDate.startsWith(arcYear));
+    }
+    // 月フィルタ
+    if (arcMonth !== 'all') {
+      const mm = String(arcMonth).padStart(2, '0');
+      items = items.filter(a => a.originalDate && a.originalDate.slice(5, 7) === mm);
+    }
+
+    if (totalEl) totalEl.textContent = `${items.length} 件`;
+
+    if (items.length === 0) {
+      container.innerHTML = '<div class="api-state"><div class="api-empty">記事がありません。</div></div>';
+      return;
+    }
+
+    // 年月グループ化（降順）
+    const sorted = [...items].sort((a, b) => (b.originalDate||'').localeCompare(a.originalDate||''));
+    const groups = new Map();
+    for (const item of sorted) {
+      const key = getArcGroupKey(item);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    }
+
+    container.innerHTML = [...groups.entries()].map(([label, groupItems]) => `
+      <div class="arc-group-head">
+        <span class="arc-group-title">${esc(label)}</span>
+        <span class="arc-group-count">${groupItems.length} 件</span>
+      </div>
+      <ul class="arc-list">${groupItems.map(renderArcItem).join('')}</ul>
+    `).join('');
+  }
+
+  function buildMonthFilter(data) {
+    const monthRow = document.getElementById('arc-month-row');
+    if (!monthRow) return;
+    if (arcYear === 'all') { monthRow.hidden = true; return; }
+
+    const months = [...new Set(
+      data
+        .filter(a => a.originalDate && a.originalDate.startsWith(arcYear))
+        .map(a => parseInt(a.originalDate.slice(5, 7)))
+        .filter(m => !isNaN(m))
+    )].sort((a, b) => a - b);
+
+    const chips = ['all', ...months].map(m => {
+      const label  = m === 'all' ? '全月' : m + '月';
+      const val    = m === 'all' ? 'all'  : m;
+      const active = val === arcMonth ? ' arc-chip--active' : '';
+      return `<button class="arc-chip${active}" data-month="${val}">${label}</button>`;
+    }).join('');
+
+    monthRow.innerHTML = `<span class="arc-filter-label">Month</span>${chips}`;
+    monthRow.hidden    = false;
+
+    monthRow.querySelectorAll('.arc-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        monthRow.querySelectorAll('.arc-chip').forEach(c => c.classList.remove('arc-chip--active'));
+        chip.classList.add('arc-chip--active');
+        arcMonth = chip.dataset.month === 'all' ? 'all' : parseInt(chip.dataset.month);
+        renderArchive();
+      });
+    });
+  }
+
+  function buildArcFilters(data) {
+    const yearRow = document.getElementById('arc-year-row');
+    if (!yearRow) return;
+
+    const years = [...new Set(
+      data.map(a => a.originalDate ? a.originalDate.slice(0, 4) : null).filter(Boolean)
+    )].sort().reverse();
+
+    const chips = ['all', ...years].map(y => {
+      const label  = y === 'all' ? '全期間' : y + '年';
+      const active = y === arcYear ? ' arc-chip--active' : '';
+      return `<button class="arc-chip${active}" data-year="${y}">${label}</button>`;
+    }).join('');
+
+    yearRow.innerHTML = `<span class="arc-filter-label">Year</span>${chips}`;
+
+    yearRow.querySelectorAll('.arc-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        yearRow.querySelectorAll('.arc-chip').forEach(c => c.classList.remove('arc-chip--active'));
+        chip.classList.add('arc-chip--active');
+        arcYear  = chip.dataset.year;
+        arcMonth = 'all';
+        buildMonthFilter(data);
+        renderArchive();
+      });
+    });
+
+    buildMonthFilter(data);
+  }
+
+  async function loadArchive() {
+    try {
+      const res = await fetch(API_BASE + '/archive');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      allArchive = await res.json();
+
+      // デフォルトを最新年に設定
+      const years = [...new Set(
+        allArchive.map(a => a.originalDate ? a.originalDate.slice(0, 4) : null).filter(Boolean)
+      )].sort().reverse();
+      if (years.length > 0) arcYear = years[0];
+
+      buildArcFilters(allArchive);
+      renderArchive();
+    } catch (err) {
+      const container = document.getElementById('archive-list');
+      if (container) container.innerHTML =
+        `<div class="api-state"><div class="api-error">アーカイブの読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
+      const yearRow = document.getElementById('arc-year-row');
+      if (yearRow) yearRow.innerHTML = '';
+    }
+  }
+
+  // ── カテゴリ chip フィルタ ─────────────────────────────────────────────────
   document.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip--active'));
@@ -1025,17 +1294,19 @@
     });
   });
 
-  // ── search ────────────────────────────────────────────────────────────────
+  // ── 検索（最新記事＋アーカイブを横断） ────────────────────────────────────
   document.getElementById('search-input').addEventListener('input', e => {
     currentSearch = e.target.value.trim();
     renderGrid();
+    renderArchive();
   });
   document.getElementById('search-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') e.preventDefault();
   });
 
-  // ── init ──────────────────────────────────────────────────────────────────
+  // ── 初期化 ────────────────────────────────────────────────────────────────
   loadArticles();
+  loadArchive();
 </script>
 </body>
 </html>
