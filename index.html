@@ -1292,10 +1292,9 @@
       data.map(a => a.originalDate ? a.originalDate.slice(0, 4) : null).filter(Boolean)
     )].sort().reverse();
 
-    const chips = ['all', ...years].map(y => {
-      const label  = y === 'all' ? '全期間' : y + '年';
+    const chips = years.map(y => {
       const active = y === arcYear ? ' arc-chip--active' : '';
-      return `<button class="arc-chip${active}" data-year="${y}">${label}</button>`;
+      return `<button class="arc-chip${active}" data-year="${y}">${y}年</button>`;
     }).join('');
 
     yearRow.innerHTML = `<span class="arc-filter-label">Year</span>${chips}`;
