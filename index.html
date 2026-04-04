@@ -526,7 +526,7 @@
     }
     .art-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
     .art-card-img img { width: 100%; height: 160px; object-fit: cover; display: block; }
-    .art-card-img img.art-card-default-img { object-fit: contain; padding: 24px; background: var(--accent-soft); }
+    .art-card-img img.art-card-default-img { object-fit: contain; padding: 24px; background: #b2c1c2; }
     .art-card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
     .art-card-meta {
       display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
@@ -989,12 +989,14 @@
   // ── 共通定数・状態 ────────────────────────────────────────────────────────
   const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
 
-  let allArticles  = [];
-  let allArchive   = [];
-  let currentCat   = 'all';
+  let allArticles   = [];
+  let allArchive    = [];
+  let arcData       = [];     // allArchive + articles（top12除く）の結合
+  let currentCat    = 'all';
   let currentSearch = '';
-  let arcYear      = 'all';   // ロード後に最新年に更新
-  let arcMonth     = 'all';   // 数値 or 'all'
+  let arcYear       = 'all';  // ロード後に最新年に更新
+  let arcMonth      = 'all';  // 数値 or 'all'
+  let arcYearLocked = false;  // ユーザーが年を手動選択したらtrue
 
   // ── 共通ユーティリティ ────────────────────────────────────────────────────
   function getCatKey(a) {
@@ -1127,6 +1129,7 @@
       renderGrid();
       renderHeroPanel();
       renderCatGrid();
+      refreshArchiveView();
     } catch (err) {
       document.getElementById('articles-grid').innerHTML =
         `<div class="api-state"><div class="api-error">記事の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
@@ -1138,9 +1141,43 @@
   }
 
   // ── アーカイブセクション ────────────────────────────────────────────────────
+
+  function buildCombinedArcData() {
+    // top12に表示済みの記事は重複させない
+    const top12Set = new Set(filterArticles().slice(0, MAX_CARDS).map(a => a.timestamp));
+
+    const articleItems = allArticles
+      .filter(a => !top12Set.has(a.timestamp))
+      .map(a => ({
+        id:          a.timestamp,
+        title:       a.title       || '',
+        category:    a.category    || '',
+        author:      a.author      || '',
+        originalDate: (a.publishDate || a.timestamp || '').slice(0, 10),
+        venue:       a.venue       || '',
+        _source:     'articles',
+      }));
+
+    arcData = [...allArchive, ...articleItems];
+  }
+
+  function refreshArchiveView() {
+    buildCombinedArcData();
+    // ユーザーが年を選んでいない場合のみ最新年に自動セット
+    if (!arcYearLocked) {
+      const years = [...new Set(
+        arcData.map(a => a.originalDate ? a.originalDate.slice(0, 4) : null).filter(Boolean)
+      )].sort().reverse();
+      if (years.length > 0) arcYear = years[0];
+    }
+    buildArcFilters(arcData);
+    renderArchive();
+  }
+
   function renderArcItem(a) {
     const dateStr = formatDate(a.originalDate);
-    const href = `article.html?id=${encodeURIComponent(a.id)}&source=archive`;
+    const source  = a._source || 'archive';
+    const href = `article.html?id=${encodeURIComponent(a.id)}&source=${source}`;
     return `
       <li class="arc-item">
         <a href="${href}" style="display:block;color:inherit">
@@ -1171,12 +1208,12 @@
     const totalEl   = document.getElementById('arc-total');
     if (!container) return;
 
-    let items = allArchive;
+    let items = arcData;
     const q = currentSearch.toLowerCase();
 
     if (q) {
       // 検索モード：年月フィルタを無視して全件検索
-      items = allArchive.filter(a => {
+      items = arcData.filter(a => {
         const text = [a.title, a.category, a.author, a.venue].join(' ').toLowerCase();
         return text.includes(q);
       });
@@ -1279,6 +1316,7 @@
       chip.addEventListener('click', () => {
         yearRow.querySelectorAll('.arc-chip').forEach(c => c.classList.remove('arc-chip--active'));
         chip.classList.add('arc-chip--active');
+        arcYearLocked = true;
         arcYear  = chip.dataset.year;
         arcMonth = 'all';
         buildMonthFilter(data);
@@ -1294,15 +1332,7 @@
       const res = await fetch(API_BASE + '/archive');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       allArchive = await res.json();
-
-      // デフォルトを最新年に設定
-      const years = [...new Set(
-        allArchive.map(a => a.originalDate ? a.originalDate.slice(0, 4) : null).filter(Boolean)
-      )].sort().reverse();
-      if (years.length > 0) arcYear = years[0];
-
-      buildArcFilters(allArchive);
-      renderArchive();
+      refreshArchiveView();
     } catch (err) {
       const container = document.getElementById('archive-list');
       if (container) container.innerHTML =
