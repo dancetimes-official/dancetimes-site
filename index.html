@@ -522,6 +522,7 @@
       overflow: hidden;
       transition: box-shadow 0.2s, transform 0.2s;
       display: flex; flex-direction: column;
+      cursor: pointer;
     }
     .art-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
     .art-card-img img { width: 100%; height: 160px; object-fit: cover; display: block; }
@@ -1021,8 +1022,9 @@
     const dateStr = formatDate(a.publishDate || a.timestamp);
     const perfDate = a.performanceDate ? formatDate(a.performanceDate) : '';
     const venueStr = a.venue ? (perfDate ? `${perfDate} ── ${esc(a.venue)}` : esc(a.venue)) : '';
+    const href = `article.html?id=${encodeURIComponent(a.timestamp)}&source=articles`;
     return `
-      <article class="art-card" data-cat="${catKey}">
+      <a href="${href}" class="art-card" data-cat="${catKey}">
         ${a.photo ? `<div class="art-card-img"><img src="${esc(a.photo)}" alt="${esc(a.title)}" loading="lazy"></div>` : ''}
         <div class="art-card-body">
           <div class="art-card-meta">
@@ -1033,7 +1035,7 @@
           ${venueStr ? `<div class="art-card-venue">${venueStr}</div>` : ''}
           ${a.author ? `<div class="art-card-author">${esc(a.author)}</div>` : ''}
         </div>
-      </article>`;
+      </a>`;
   }
 
   function filterArticles() {
@@ -1068,7 +1070,7 @@
     }
     list.innerHTML = latest.map(a => `
       <li class="panel-item">
-        <a href="#">${esc(a.title)}</a>
+        <a href="article.html?id=${encodeURIComponent(a.timestamp)}&source=articles">${esc(a.title)}</a>
         <div class="panel-meta">${esc(formatDate(a.publishDate || a.timestamp))} ── ${esc(a.category || '')}</div>
       </li>`).join('');
   }
@@ -1087,7 +1089,7 @@
         const venue = a.venue ? ` ── ${esc(a.venue)}` : '';
         return `
           <li class="cat-item">
-            <a href="#">${esc(a.title)}</a>
+            <a href="article.html?id=${encodeURIComponent(a.timestamp)}&source=articles">${esc(a.title)}</a>
             <div class="cat-meta">${esc(formatDate(a.publishDate || a.timestamp))}${venue}</div>
           </li>`;
       }).join('');
@@ -1115,16 +1117,19 @@
   // ── アーカイブセクション ────────────────────────────────────────────────────
   function renderArcItem(a) {
     const dateStr = formatDate(a.originalDate);
+    const href = `article.html?id=${encodeURIComponent(a.id)}&source=archive`;
     return `
       <li class="arc-item">
-        <div class="arc-item-main">
-          <span class="arc-item-title">${esc(a.title)}</span>
-          <span class="arc-item-date">${esc(dateStr)}</span>
-        </div>
-        <div class="arc-item-sub">
-          ${a.category ? `<span class="arc-item-cat">${esc(a.category)}</span>` : ''}
-          ${a.venue    ? `<span class="arc-item-venue">${esc(a.venue)}</span>`  : ''}
-        </div>
+        <a href="${href}" style="display:block;color:inherit">
+          <div class="arc-item-main">
+            <span class="arc-item-title">${esc(a.title)}</span>
+            <span class="arc-item-date">${esc(dateStr)}</span>
+          </div>
+          <div class="arc-item-sub">
+            ${a.category ? `<span class="arc-item-cat">${esc(a.category)}</span>` : ''}
+            ${a.venue    ? `<span class="arc-item-venue">${esc(a.venue)}</span>`  : ''}
+          </div>
+        </a>
       </li>`;
   }
 
