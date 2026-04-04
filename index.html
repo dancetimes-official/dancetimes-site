@@ -526,6 +526,7 @@
     }
     .art-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
     .art-card-img img { width: 100%; height: 160px; object-fit: cover; display: block; }
+    .art-card-img img.art-card-default-img { object-fit: contain; padding: 24px; background: var(--accent-soft); }
     .art-card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
     .art-card-meta {
       display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
@@ -805,6 +806,9 @@
             </div>
           </div>
         </div>
+        <div id="articles-more" style="display:none; text-align:center; margin-top:28px;">
+          <a href="#archive" class="btn-secondary">すべての記事を見る →</a>
+        </div>
       </div>
     </section>
 
@@ -1017,15 +1021,20 @@
   }
 
   // ── 最新記事セクション ─────────────────────────────────────────────────────
+  const DEFAULT_IMG = 'assets/logo.png';
+  const MAX_CARDS   = 12;
+
   function renderCard(a) {
-    const catKey  = getCatKey(a);
-    const dateStr = formatDate(a.publishDate || a.timestamp);
+    const catKey   = getCatKey(a);
+    const dateStr  = formatDate(a.publishDate || a.timestamp);
     const perfDate = a.performanceDate ? formatDate(a.performanceDate) : '';
     const venueStr = a.venue ? (perfDate ? `${perfDate} ── ${esc(a.venue)}` : esc(a.venue)) : '';
-    const href = `article.html?id=${encodeURIComponent(a.timestamp)}&source=articles`;
+    const href     = `article.html?id=${encodeURIComponent(a.timestamp)}&source=articles`;
+    const imgSrc   = a.photo || DEFAULT_IMG;
+    const imgClass = a.photo ? '' : ' art-card-default-img';
     return `
       <a href="${href}" class="art-card" data-cat="${catKey}">
-        ${a.photo ? `<div class="art-card-img"><img src="${esc(a.photo)}" alt="${esc(a.title)}" loading="lazy"></div>` : ''}
+        <div class="art-card-img"><img src="${esc(imgSrc)}" alt="${esc(a.title)}" loading="lazy" class="${imgClass.trim()}"></div>
         <div class="art-card-body">
           <div class="art-card-meta">
             ${a.category ? `<span class="art-card-cat">${esc(a.category)}</span>` : ''}
@@ -1040,24 +1049,34 @@
 
   function filterArticles() {
     const q = currentSearch.toLowerCase();
-    return allArticles.filter(a => {
-      if (currentCat !== 'all' && getCatKey(a) !== currentCat) return false;
-      if (q) {
-        const text = [a.title, a.category, a.author, a.venue].join(' ').toLowerCase();
-        if (!text.includes(q)) return false;
-      }
-      return true;
-    });
+    return allArticles
+      .filter(a => {
+        if (currentCat !== 'all' && getCatKey(a) !== currentCat) return false;
+        if (q) {
+          const text = [a.title, a.category, a.author, a.venue].join(' ').toLowerCase();
+          if (!text.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const da = a.publishDate || a.timestamp || '';
+        const db = b.publishDate || b.timestamp || '';
+        return db.localeCompare(da);
+      });
   }
 
   function renderGrid() {
     const grid     = document.getElementById('articles-grid');
+    const moreBtn  = document.getElementById('articles-more');
     const filtered = filterArticles();
     if (filtered.length === 0) {
       grid.innerHTML = '<div class="api-state"><div class="api-empty">該当する記事がありません。</div></div>';
+      if (moreBtn) moreBtn.style.display = 'none';
       return;
     }
-    grid.innerHTML = filtered.map(renderCard).join('');
+    const display = filtered.slice(0, MAX_CARDS);
+    grid.innerHTML = display.map(renderCard).join('');
+    if (moreBtn) moreBtn.style.display = filtered.length > MAX_CARDS ? 'block' : 'none';
   }
 
   function renderHeroPanel() {
@@ -1100,7 +1119,11 @@
     try {
       const res = await fetch(API_BASE + '/articles');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      allArticles = await res.json();
+      allArticles = (await res.json()).sort((a, b) => {
+        const da = a.publishDate || a.timestamp || '';
+        const db = b.publishDate || b.timestamp || '';
+        return db.localeCompare(da);
+      });
       renderGrid();
       renderHeroPanel();
       renderCatGrid();
