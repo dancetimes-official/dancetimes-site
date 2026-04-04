@@ -509,6 +509,69 @@
     }
     .footer-links a:hover { color: var(--accent-dark); }
 
+    /* ===== ARTICLE CARDS ===== */
+    .articles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .art-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+      display: flex; flex-direction: column;
+    }
+    .art-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .art-card-img img { width: 100%; height: 160px; object-fit: cover; display: block; }
+    .art-card-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .art-card-meta {
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+      font-family: var(--font-mono); font-size: 0.62rem;
+      color: var(--text-sub); letter-spacing: 0.06em;
+    }
+    .art-card-cat {
+      background: var(--accent-soft); color: var(--accent-dark);
+      padding: 2px 8px; border-radius: 999px;
+    }
+    .art-card-title {
+      font-family: var(--font-display); font-size: 1rem; font-weight: 400;
+      line-height: 1.45; color: var(--text);
+    }
+    .art-card-venue {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      color: var(--text-sub); letter-spacing: 0.04em;
+    }
+    .art-card-author { font-size: 0.78rem; color: var(--text-sub); margin-top: auto; }
+
+    /* ===== LOADING / ERROR ===== */
+    .api-state {
+      grid-column: 1 / -1;
+      padding: 40px; text-align: center;
+    }
+    .api-loading {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      letter-spacing: 0.12em; color: var(--text-sub);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .api-spinner {
+      width: 16px; height: 16px; flex-shrink: 0;
+      border: 2px solid var(--accent); border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .api-error {
+      font-size: 0.85rem; color: var(--text-sub);
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      padding: 32px;
+    }
+    .api-empty {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      letter-spacing: 0.08em; color: var(--text-sub);
+      padding: 32px;
+    }
+
     /* ===== PAGE-LOAD ANIMATION ===== */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
@@ -607,22 +670,11 @@
               <span class="panel-head-title">Latest Highlights</span>
               <span class="panel-badge">本日更新</span>
             </div>
-            <ul class="panel-list">
+            <ul class="panel-list" id="panel-list">
               <li class="panel-item">
-                <a href="#">英国ロイヤル・バレエ団『眠れる森の美女』</a>
-                <div class="panel-meta">2025.09.12 ── 舞台評</div>
-              </li>
-              <li class="panel-item">
-                <a href="#">コンテンポラリーダンス「xxxx」舞台裏レポート</a>
-                <div class="panel-meta">2025.09.08 ── 公演レポート</div>
-              </li>
-              <li class="panel-item">
-                <a href="#">月間ベストダンサー（2025年10月）</a>
-                <div class="panel-meta">2025.10.01 ── Monthly Best</div>
-              </li>
-              <li class="panel-item">
-                <a href="#">新国立劇場『白鳥の湖』記者会見レポート</a>
-                <div class="panel-meta">2025.09.20 ── 記者会見</div>
+                <div class="api-loading" style="padding:12px 0">
+                  <div class="api-spinner"></div>
+                </div>
               </li>
             </ul>
           </aside>
@@ -652,6 +704,20 @@
       </div>
     </div>
 
+    <!-- ===== LATEST ARTICLES (dynamic) ===== -->
+    <section class="section" id="articles-section">
+      <div class="wrap">
+        <div id="articles-grid" class="articles-grid">
+          <div class="api-state">
+            <div class="api-loading">
+              <div class="api-spinner"></div>
+              記事を読み込み中
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== CATEGORIES ===== -->
     <section class="section" id="categories">
       <div class="wrap">
@@ -671,20 +737,7 @@
               <div class="cat-col-title">Monthly Best</div>
               <div class="cat-col-sub">月間ベストダンサー</div>
             </header>
-            <ul class="cat-list">
-              <li class="cat-item">
-                <a href="#">月間ベストダンサー（2025年10月）</a>
-                <div class="cat-meta">2025.11.01</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">月間ベストダンサー（2025年9月）</a>
-                <div class="cat-meta">2025.10.01</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">月間ベストダンサー（2025年8月）</a>
-                <div class="cat-meta">2025.09.01</div>
-              </li>
-            </ul>
+            <ul class="cat-list" id="cat-list-best"></ul>
           </div>
 
           <!-- 舞台評 -->
@@ -693,20 +746,7 @@
               <div class="cat-col-title">Reviews</div>
               <div class="cat-col-sub">舞台評・批評</div>
             </header>
-            <ul class="cat-list">
-              <li class="cat-item">
-                <a href="#">東京バレエ団『白鳥の湖』</a>
-                <div class="cat-meta">2025.09.05 ── 東京文化会館</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">Noism『トリプルビル』</a>
-                <div class="cat-meta">2025.09.04 ── さいたま</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">K-ballet『くるみ割り人形』</a>
-                <div class="cat-meta">2025.08.22 ── オーチャード</div>
-              </li>
-            </ul>
+            <ul class="cat-list" id="cat-list-review"></ul>
           </div>
 
           <!-- レポート -->
@@ -715,20 +755,7 @@
               <div class="cat-col-title">Report</div>
               <div class="cat-col-sub">公演レポート・会見・取材</div>
             </header>
-            <ul class="cat-list">
-              <li class="cat-item">
-                <a href="#">新作バレエ制作記者会見レポート</a>
-                <div class="cat-meta">2025.09.03 ── 記者会見</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">コンテンポラリーダンス「xxxx」舞台裏</a>
-                <div class="cat-meta">2025.08.28 ── バックステージ</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">若手振付家インタビュー</a>
-                <div class="cat-meta">2025.08.15 ── インタビュー</div>
-              </li>
-            </ul>
+            <ul class="cat-list" id="cat-list-report"></ul>
           </div>
 
           <!-- Reviews EN -->
@@ -737,20 +764,7 @@
               <div class="cat-col-title">Reviews (EN)</div>
               <div class="cat-col-sub">English-language reviews</div>
             </header>
-            <ul class="cat-list">
-              <li class="cat-item">
-                <a href="#">Royal Ballet "Sleeping Beauty" — Review</a>
-                <div class="cat-meta">2025.09.12 ── Tokyo</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">Tokyo Ballet "Swan Lake" — Review</a>
-                <div class="cat-meta">2025.09.05 ── Tokyo Bunka Kaikan</div>
-              </li>
-              <li class="cat-item">
-                <a href="#">Noism "Triple Bill" — Report</a>
-                <div class="cat-meta">2025.09.04 ── Saitama</div>
-              </li>
-            </ul>
+            <ul class="cat-list" id="cat-list-en"></ul>
           </div>
 
         </div><!-- /cat-grid -->
@@ -857,31 +871,171 @@
 </div><!-- /page -->
 
 <script>
-  // year
+  // ── year & hamburger ──────────────────────────────────────────────────────
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // hamburger
   const toggle = document.getElementById('nav-toggle');
-  const nav    = document.getElementById('main-nav');
-  toggle.addEventListener('click', () => {
-    nav.classList.toggle('open');
-  });
+  const mainNav = document.getElementById('main-nav');
+  toggle.addEventListener('click', () => mainNav.classList.toggle('open'));
 
-  // chip filter (UI only — real filter wired to Cloudflare Workers later)
+  // ── API ───────────────────────────────────────────────────────────────────
+  const API_URL = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
+  let allArticles = [];
+  let currentCat = 'all';
+  let currentSearch = '';
+
+  function getCatKey(article) {
+    const lang = (article.language || '').toLowerCase();
+    if (lang === 'english' || lang === 'en') return 'en';
+    const cat = article.category || '';
+    if (cat.includes('月間ベスト') || cat.includes('ベストダンサー')) return 'best';
+    if (cat.includes('舞台評') || cat.includes('批評') || cat.includes('レビュー')) return 'review';
+    if (cat.includes('レポート') || cat.includes('インタビュー') || cat.includes('取材')) return 'report';
+    return 'other';
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function esc(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function renderCard(article) {
+    const catKey = getCatKey(article);
+    const dateStr = formatDate(article.publishDate || article.timestamp);
+    const perfDate = article.performanceDate ? formatDate(article.performanceDate) : '';
+    const venueStr = article.venue
+      ? (perfDate ? `${perfDate} ── ${esc(article.venue)}` : esc(article.venue))
+      : '';
+    return `
+      <article class="art-card" data-cat="${catKey}">
+        ${article.photo ? `<div class="art-card-img"><img src="${esc(article.photo)}" alt="${esc(article.title)}" loading="lazy"></div>` : ''}
+        <div class="art-card-body">
+          <div class="art-card-meta">
+            ${article.category ? `<span class="art-card-cat">${esc(article.category)}</span>` : ''}
+            <span>${esc(dateStr)}</span>
+          </div>
+          <h3 class="art-card-title">${esc(article.title)}</h3>
+          ${venueStr ? `<div class="art-card-venue">${venueStr}</div>` : ''}
+          ${article.author ? `<div class="art-card-author">${esc(article.author)}</div>` : ''}
+        </div>
+      </article>`;
+  }
+
+  function filterArticles() {
+    const q = currentSearch.toLowerCase();
+    return allArticles.filter(a => {
+      if (currentCat !== 'all' && getCatKey(a) !== currentCat) return false;
+      if (q) {
+        const text = [a.title, a.category, a.author, a.venue, a.body].join(' ').toLowerCase();
+        if (!text.includes(q)) return false;
+      }
+      return true;
+    });
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('articles-grid');
+    const filtered = filterArticles();
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="api-state"><div class="api-empty">該当する記事がありません。</div></div>';
+      return;
+    }
+    grid.innerHTML = filtered.map(renderCard).join('');
+  }
+
+  function renderHeroPanel() {
+    const list = document.getElementById('panel-list');
+    if (!list) return;
+    const latest = allArticles.slice(0, 4);
+    if (latest.length === 0) {
+      list.innerHTML = '<li class="panel-item"><span style="color:var(--text-sub);font-size:0.8rem;padding:12px 0;display:block">記事がありません</span></li>';
+      return;
+    }
+    list.innerHTML = latest.map(a => {
+      const dateStr = formatDate(a.publishDate || a.timestamp);
+      return `
+        <li class="panel-item">
+          <a href="#">${esc(a.title)}</a>
+          <div class="panel-meta">${esc(dateStr)} ── ${esc(a.category || '')}</div>
+        </li>`;
+    }).join('');
+  }
+
+  function renderCatGrid() {
+    const mapping = {
+      best: 'cat-list-best',
+      review: 'cat-list-review',
+      report: 'cat-list-report',
+      en: 'cat-list-en',
+    };
+    Object.entries(mapping).forEach(([key, id]) => {
+      const list = document.getElementById(id);
+      if (!list) return;
+      const items = allArticles.filter(a => getCatKey(a) === key).slice(0, 3);
+      if (items.length === 0) {
+        list.innerHTML = '<li class="cat-item"><span style="color:var(--text-sub);font-size:0.8rem">記事がありません</span></li>';
+        return;
+      }
+      list.innerHTML = items.map(a => {
+        const dateStr = formatDate(a.publishDate || a.timestamp);
+        const venue = a.venue ? ` ── ${esc(a.venue)}` : '';
+        return `
+          <li class="cat-item">
+            <a href="#">${esc(a.title)}</a>
+            <div class="cat-meta">${esc(dateStr)}${venue}</div>
+          </li>`;
+      }).join('');
+    });
+  }
+
+  async function loadArticles() {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      allArticles = await res.json();
+      renderGrid();
+      renderHeroPanel();
+      renderCatGrid();
+    } catch (err) {
+      const grid = document.getElementById('articles-grid');
+      grid.innerHTML = `<div class="api-state"><div class="api-error">記事の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
+      // cat-grid のプレースホルダー
+      ['cat-list-best','cat-list-review','cat-list-report','cat-list-en'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<li class="cat-item"><span style="color:var(--text-sub);font-size:0.8rem">読み込み失敗</span></li>';
+      });
+    }
+  }
+
+  // ── chip filter ───────────────────────────────────────────────────────────
   document.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip--active'));
       chip.classList.add('chip--active');
+      currentCat = chip.dataset.cat;
+      renderGrid();
     });
   });
 
-  // search (placeholder — wired to API later)
-  document.getElementById('search-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      const q = e.target.value.trim();
-      if (q) window.location.href = `/search?q=${encodeURIComponent(q)}`;
-    }
+  // ── search ────────────────────────────────────────────────────────────────
+  document.getElementById('search-input').addEventListener('input', e => {
+    currentSearch = e.target.value.trim();
+    renderGrid();
   });
+  document.getElementById('search-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') e.preventDefault();
+  });
+
+  // ── init ──────────────────────────────────────────────────────────────────
+  loadArticles();
 </script>
 </body>
 </html>
