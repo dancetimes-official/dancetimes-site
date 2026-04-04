@@ -663,6 +663,32 @@
       .arc-item-date { order: -1; }
     }
 
+    /* ===== ARC PAGINATION ===== */
+    .arc-pagination {
+      display: flex; justify-content: center; align-items: center;
+      flex-wrap: wrap; gap: 5px;
+      padding: 32px 0 8px;
+    }
+    .arc-page-btn {
+      min-width: 34px; height: 34px; padding: 0 9px;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--bg-card);
+      font-family: var(--font-mono); font-size: 0.68rem;
+      letter-spacing: 0.04em; color: var(--text-sub);
+      cursor: pointer; transition: all 0.15s;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .arc-page-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .arc-page-btn--active {
+      border-color: var(--accent); background: var(--accent-soft);
+      color: var(--accent-dark); font-weight: 600; pointer-events: none;
+    }
+    .arc-page-btn--disabled { opacity: 0.35; pointer-events: none; cursor: default; }
+    .arc-page-ellipsis {
+      font-family: var(--font-mono); font-size: 0.68rem;
+      color: var(--text-sub); padding: 0 3px;
+    }
+
     /* ===== PAGE-LOAD ANIMATION ===== */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
@@ -890,6 +916,7 @@
             </div>
           </div>
         </div>
+        <div id="arc-pagination" class="arc-pagination"></div>
       </div>
     </section>
 
@@ -994,6 +1021,8 @@
   let arcYear       = 'all';  // ロード後に最新年に更新
   let arcMonth      = 'all';  // 数値 or 'all'
   let arcYearLocked = false;  // ユーザーが年を手動選択したらtrue
+  let arcPage       = 1;
+  const ARC_PER_PAGE = 20;
 
   // ── 共通ユーティリティ ────────────────────────────────────────────────────
   function getCatKey(a) {
@@ -1191,65 +1220,99 @@
     return isNaN(m) ? '不明' : m + '月';
   }
 
+  function renderArcPagination(total) {
+    const pagEl = document.getElementById('arc-pagination');
+    if (!pagEl) return;
+    const totalPages = Math.ceil(total / ARC_PER_PAGE);
+    if (totalPages <= 1) { pagEl.innerHTML = ''; return; }
+
+    const p = arcPage;
+    const pages = new Set([1, totalPages]);
+    for (let i = Math.max(1, p - 2); i <= Math.min(totalPages, p + 2); i++) pages.add(i);
+
+    let html = '';
+    html += `<button class="arc-page-btn${p === 1 ? ' arc-page-btn--disabled' : ''}" data-page="${p - 1}">←</button>`;
+    let prev = 0;
+    for (const n of [...pages].sort((a, b) => a - b)) {
+      if (prev && n - prev > 1) html += `<span class="arc-page-ellipsis">…</span>`;
+      html += `<button class="arc-page-btn${n === p ? ' arc-page-btn--active' : ''}" data-page="${n}">${n}</button>`;
+      prev = n;
+    }
+    html += `<button class="arc-page-btn${p === totalPages ? ' arc-page-btn--disabled' : ''}" data-page="${p + 1}">→</button>`;
+
+    pagEl.innerHTML = html;
+    pagEl.querySelectorAll('.arc-page-btn[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        arcPage = parseInt(btn.dataset.page);
+        renderArchive();
+        document.getElementById('all-articles').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
   function renderArchive() {
     const container = document.getElementById('archive-list');
     const totalEl   = document.getElementById('arc-total');
     if (!container) return;
 
-    let items = arcData;
     const q = currentSearch.toLowerCase();
+    let items = arcData;
 
+    // フィルタリング
     if (q) {
-      // 検索モード：年月フィルタを無視して全件検索
       items = arcData.filter(a => {
         const text = [a.title, a.category, a.author, a.venue].join(' ').toLowerCase();
         return text.includes(q);
       });
-      if (totalEl) totalEl.textContent = `${items.length} 件`;
-      if (items.length === 0) {
-        container.innerHTML = '<div class="api-state"><div class="api-empty">該当するアーカイブ記事がありません。</div></div>';
-        return;
+    } else {
+      if (arcYear !== 'all') {
+        items = items.filter(a => a.originalDate && a.originalDate.startsWith(arcYear));
       }
-      const sorted = [...items].sort((a, b) => (b.originalDate||'').localeCompare(a.originalDate||''));
-      container.innerHTML =
-        `<p class="arc-search-note">「${esc(currentSearch)}」に一致: ${items.length}件</p>` +
-        `<ul class="arc-list">${sorted.map(renderArcItem).join('')}</ul>`;
-      return;
+      if (arcMonth !== 'all') {
+        const mm = String(arcMonth).padStart(2, '0');
+        items = items.filter(a => a.originalDate && a.originalDate.slice(5, 7) === mm);
+      }
     }
 
-    // 年フィルタ
-    if (arcYear !== 'all') {
-      items = items.filter(a => a.originalDate && a.originalDate.startsWith(arcYear));
-    }
-    // 月フィルタ
-    if (arcMonth !== 'all') {
-      const mm = String(arcMonth).padStart(2, '0');
-      items = items.filter(a => a.originalDate && a.originalDate.slice(5, 7) === mm);
-    }
-
-    if (totalEl) totalEl.textContent = `${items.length} 件`;
-
-    if (items.length === 0) {
-      container.innerHTML = '<div class="api-state"><div class="api-empty">記事がありません。</div></div>';
-      return;
-    }
-
-    // 年月グループ化（降順）
     const sorted = [...items].sort((a, b) => (b.originalDate||'').localeCompare(a.originalDate||''));
+    const total  = sorted.length;
+
+    // ステータス表示
+    if (totalEl) {
+      if (total === 0) {
+        totalEl.textContent = '0 件';
+      } else {
+        const start = (arcPage - 1) * ARC_PER_PAGE + 1;
+        const end   = Math.min(arcPage * ARC_PER_PAGE, total);
+        totalEl.textContent = `${total} 件中 ${start}–${end} 件`;
+      }
+    }
+
+    if (total === 0) {
+      container.innerHTML = `<div class="api-state"><div class="api-empty">${q ? '該当する記事がありません。' : '記事がありません。'}</div></div>`;
+      document.getElementById('arc-pagination').innerHTML = '';
+      return;
+    }
+
+    // 現ページのアイテムを取得してグループ化
+    const pageItems = sorted.slice((arcPage - 1) * ARC_PER_PAGE, arcPage * ARC_PER_PAGE);
     const groups = new Map();
-    for (const item of sorted) {
+    for (const item of pageItems) {
       const key = getArcGroupKey(item);
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(item);
     }
 
-    container.innerHTML = [...groups.entries()].map(([label, groupItems]) => `
+    const prefix = q ? `<p class="arc-search-note">「${esc(currentSearch)}」に一致: ${total}件</p>` : '';
+    container.innerHTML = prefix + [...groups.entries()].map(([label, groupItems]) => `
       <div class="arc-group-head">
         <span class="arc-group-title">${esc(label)}</span>
         <span class="arc-group-count">${groupItems.length} 件</span>
       </div>
       <ul class="arc-list">${groupItems.map(renderArcItem).join('')}</ul>
     `).join('');
+
+    renderArcPagination(total);
   }
 
   function buildMonthFilter(data) {
@@ -1279,6 +1342,7 @@
         monthRow.querySelectorAll('.arc-chip').forEach(c => c.classList.remove('arc-chip--active'));
         chip.classList.add('arc-chip--active');
         arcMonth = chip.dataset.month === 'all' ? 'all' : parseInt(chip.dataset.month);
+        arcPage  = 1;
         renderArchive();
       });
     });
@@ -1306,6 +1370,7 @@
         arcYearLocked = true;
         arcYear  = chip.dataset.year;
         arcMonth = 'all';
+        arcPage  = 1;
         buildMonthFilter(data);
         renderArchive();
       });
@@ -1342,6 +1407,7 @@
   // ── 検索（最新記事＋アーカイブを横断） ────────────────────────────────────
   document.getElementById('search-input').addEventListener('input', e => {
     currentSearch = e.target.value.trim();
+    arcPage = 1;
     renderGrid();
     renderArchive();
   });
