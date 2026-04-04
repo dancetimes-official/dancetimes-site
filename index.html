@@ -713,7 +713,7 @@
         <nav id="main-nav">
           <a href="#latest"     class="nav-link">最新の記事</a>
           <a href="#categories" class="nav-link">カテゴリ</a>
-          <a href="#archive"    class="nav-link">アーカイブ</a>
+          <a href="#all-articles" class="nav-link">全記事一覧</a>
           <a href="#about"      class="nav-link">このサイトについて</a>
      <!-- <a href="#contact"    class="nav-link">連絡先</a>  -->
         </nav>
@@ -806,9 +806,6 @@
             </div>
           </div>
         </div>
-        <div id="articles-more" style="display:none; text-align:center; margin-top:28px;">
-          <a href="articles.html" class="btn-secondary">すべての記事を見る →</a>
-        </div>
       </div>
     </section>
 
@@ -865,13 +862,13 @@
       </div>
     </section>
 
-    <!-- ===== ARCHIVE ===== -->
-    <section class="section" id="archive">
+    <!-- ===== ALL ARTICLES ===== -->
+    <section class="section" id="all-articles">
       <div class="wrap">
         <div class="section-head">
           <div>
-            <span class="section-title">Archive</span>
-            <span class="section-title-en">過去記事アーカイブ</span>
+            <span class="section-title">All Articles</span>
+            <span class="section-title-en">全記事一覧</span>
           </div>
           <span class="arc-total" id="arc-total"></span>
         </div>
@@ -889,7 +886,7 @@
           <div class="api-state">
             <div class="api-loading">
               <div class="api-spinner"></div>
-              アーカイブを読み込み中
+              記事を読み込み中
             </div>
           </div>
         </div>
@@ -969,7 +966,7 @@
         <nav class="footer-links">
           <a href="#about">このサイトについて</a>
           <a href="#categories">カテゴリ</a>
-          <a href="#archive">アーカイブ</a>
+          <a href="#all-articles">全記事一覧</a>
 <!--
           <a href="#contact">連絡先</a> -->
         </nav>
@@ -991,7 +988,7 @@
 
   let allArticles   = [];
   let allArchive    = [];
-  let arcData       = [];     // allArchive + articles（top12除く）の結合
+  let arcData       = [];     // allArchive + allArticles の結合（全記事一覧用）
   let currentCat    = 'all';
   let currentSearch = '';
   let arcYear       = 'all';  // ロード後に最新年に更新
@@ -1069,16 +1066,12 @@
 
   function renderGrid() {
     const grid     = document.getElementById('articles-grid');
-    const moreBtn  = document.getElementById('articles-more');
     const filtered = filterArticles();
     if (filtered.length === 0) {
       grid.innerHTML = '<div class="api-state"><div class="api-empty">該当する記事がありません。</div></div>';
-      if (moreBtn) moreBtn.style.display = 'none';
       return;
     }
-    const display = filtered.slice(0, MAX_CARDS);
-    grid.innerHTML = display.map(renderCard).join('');
-    if (moreBtn) moreBtn.style.display = filtered.length > MAX_CARDS ? 'block' : 'none';
+    grid.innerHTML = filtered.slice(0, MAX_CARDS).map(renderCard).join('');
   }
 
   function renderHeroPanel() {
@@ -1143,20 +1136,15 @@
   // ── アーカイブセクション ────────────────────────────────────────────────────
 
   function buildCombinedArcData() {
-    // top12に表示済みの記事は重複させない
-    const top12Set = new Set(filterArticles().slice(0, MAX_CARDS).map(a => a.timestamp));
-
-    const articleItems = allArticles
-      .filter(a => !top12Set.has(a.timestamp))
-      .map(a => ({
-        id:          a.timestamp,
-        title:       a.title       || '',
-        category:    a.category    || '',
-        author:      a.author      || '',
-        originalDate: (a.publishDate || a.timestamp || '').slice(0, 10),
-        venue:       a.venue       || '',
-        _source:     'articles',
-      }));
+    const articleItems = allArticles.map(a => ({
+      id:           a.timestamp,
+      title:        a.title       || '',
+      category:     a.category    || '',
+      author:       a.author      || '',
+      originalDate: (a.publishDate || a.timestamp || '').slice(0, 10),
+      venue:        a.venue       || '',
+      _source:      'articles',
+    }));
 
     arcData = [...allArchive, ...articleItems];
   }
