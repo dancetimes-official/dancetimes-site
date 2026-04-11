@@ -33,7 +33,7 @@
 
     /* ===== RESET ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; scroll-padding-top: 64px; }
     body {
       font-family: var(--font-body);
       background: var(--bg);
@@ -717,6 +717,8 @@
       .section-head { flex-direction: column; gap: 6px; align-items: flex-start; }
       nav .nav-link { padding: 12px 24px; width: 100%; }
       nav .nav-link::after { display: none; }
+      main { padding-top: 8px; }
+      .hero { padding-top: 28px; }
     }
     @media (max-width: 400px) {
       .hero-h1 { font-size: 1.7rem; }
