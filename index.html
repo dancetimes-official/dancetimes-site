@@ -709,14 +709,27 @@
     @media (max-width: 640px) {
       .wrap { padding: 0 16px; }
       .header-inner { flex-wrap: nowrap; }
-      nav { display: none; flex-direction: column; gap: 0; position: absolute; top: 100%; left: 0; right: 0; background: var(--bg); border-bottom: 1px solid var(--border); padding: 8px 0; }
+      nav {
+        display: none; flex-direction: column; gap: 0;
+        position: fixed; top: 60px; left: 0; right: 0;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        z-index: 99;
+        padding: 8px 0;
+      }
       nav.open { display: flex; }
       .nav-toggle { display: flex; }
+      nav .nav-link { padding: 12px 24px; width: 100%; }
+      nav .nav-link::after { display: none; }
+      .nav-toggle.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+      .nav-toggle.open span:nth-child(2) { opacity: 0; }
+      .nav-toggle.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+      .nav-backdrop { display: none; position: fixed; inset: 0; z-index: 98; }
+      .nav-backdrop.open { display: block; }
       .cat-grid { grid-template-columns: 1fr; }
       .archive-strip { flex-direction: column; align-items: flex-start; }
       .section-head { flex-direction: column; gap: 6px; align-items: flex-start; }
-      nav .nav-link { padding: 12px 24px; width: 100%; }
-      nav .nav-link::after { display: none; }
       main { padding-top: 8px; }
       .hero { padding-top: 28px; }
     }
@@ -752,6 +765,7 @@
       </div>
     </div>
   </header>
+  <div class="nav-backdrop" id="nav-backdrop"></div>
 
   <main>
 
@@ -1009,9 +1023,21 @@
 <script>
   // ── year & hamburger ──────────────────────────────────────────────────────
   document.getElementById('year').textContent = new Date().getFullYear();
-  const toggle  = document.getElementById('nav-toggle');
-  const mainNav = document.getElementById('main-nav');
-  toggle.addEventListener('click', () => mainNav.classList.toggle('open'));
+  const toggle   = document.getElementById('nav-toggle');
+  const mainNav  = document.getElementById('main-nav');
+  const backdrop = document.getElementById('nav-backdrop');
+  function closeNav() {
+    mainNav.classList.remove('open');
+    toggle.classList.remove('open');
+    backdrop.classList.remove('open');
+  }
+  toggle.addEventListener('click', () => {
+    const isOpen = mainNav.classList.toggle('open');
+    toggle.classList.toggle('open', isOpen);
+    backdrop.classList.toggle('open', isOpen);
+  });
+  backdrop.addEventListener('click', closeNav);
+  mainNav.querySelectorAll('.nav-link').forEach(link => link.addEventListener('click', closeNav));
 
   // ── 共通定数・状態 ────────────────────────────────────────────────────────
   const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
