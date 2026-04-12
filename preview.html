@@ -97,62 +97,6 @@
     }
     .btn-publish:hover { background: var(--accent-dark); }
 
-    /* ===== DRAFT DROPDOWN ===== */
-    .draft-wrap { position: relative; }
-    .draft-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      width: 300px;
-      background: #1e1e1e;
-      border: 1px solid #333;
-      border-radius: var(--radius);
-      z-index: 300;
-      max-height: 340px;
-      overflow-y: auto;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
-    }
-    .draft-dropdown.open { display: block; }
-    .draft-item {
-      display: flex;
-      align-items: stretch;
-      border-bottom: 1px solid #2a2a2a;
-    }
-    .draft-item:last-child { border-bottom: none; }
-    .draft-item.current { background: #252525; }
-    .draft-item-body {
-      flex: 1; min-width: 0;
-      background: none; border: none;
-      padding: 10px 12px;
-      text-align: left; cursor: pointer;
-      display: flex; flex-direction: column; gap: 3px;
-      transition: background 0.1s;
-    }
-    .draft-item-body:hover { background: #2a2a2a; }
-    .draft-item-title {
-      font-family: var(--font-body);
-      font-size: 0.78rem; color: #ddd;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .draft-item-date {
-      font-family: var(--font-mono);
-      font-size: 0.58rem; color: #555; letter-spacing: 0.04em;
-    }
-    .draft-item-delete {
-      background: none; border: none;
-      color: #444; padding: 0 14px;
-      cursor: pointer; font-size: 1rem;
-      flex-shrink: 0; transition: color 0.15s;
-    }
-    .draft-item-delete:hover { color: #e05; }
-    .draft-empty {
-      font-family: var(--font-mono);
-      font-size: 0.65rem; letter-spacing: 0.1em;
-      color: #555; text-align: center;
-      padding: 20px; text-transform: uppercase;
-    }
-
     /* ===== LAYOUT ===== */
     .layout {
       display: grid;
@@ -672,12 +616,6 @@
     <div class="topbar-left">
       <span class="topbar-logo">The Dance Times</span>
       <span class="topbar-label">投稿プレビュー</span>
-      <div class="draft-wrap">
-        <button class="btn-topbar btn-draft" id="btn-drafts">下書き一覧 ▾</button>
-        <div class="draft-dropdown" id="draft-dropdown">
-          <div class="draft-list" id="draft-list"></div>
-        </div>
-      </div>
       <div class="edit-indicator" id="edit-indicator">
         <span class="edit-indicator-label" id="edit-indicator-label"></span>
         <button class="btn-topbar btn-new" id="btn-new-article">新規作成</button>
@@ -872,20 +810,15 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API_BASE   = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
-    const DRAFTS_KEY = 'dancetimes-drafts';
+    const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
 
     // ── state ──────────────────────────────────────────────────────────────
-    let currentDevice  = 'pc';
-    let currentDraftId = null;  // 現在編集中の下書きID（null=新規）
+    let currentDevice   = 'pc';
+    let editingRowIndex = null; // null = 新規, number = 編集中の行番号
 
     // ── helpers ────────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
     const pad = n => String(n).padStart(2, '0');
-
-    function generateId() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2);
-    }
 
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -910,16 +843,6 @@
       return text.split(/\n\n+/)
         .map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`)
         .join('');
-    }
-
-    // ── localStorage helpers ────────────────────────────────────────────────
-    function getDrafts() {
-      try { return JSON.parse(localStorage.getItem(DRAFTS_KEY)) || []; }
-      catch { return []; }
-    }
-
-    function saveDraftsToStorage(drafts) {
-      localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
     }
 
     // ── update preview ─────────────────────────────────────────────────────
@@ -963,7 +886,6 @@
       }
       $('prev-perf').textContent = perfStr;
 
-      // プレビューは常に「公開」バッジで表示
       const badge = $('prev-status-badge');
       badge.textContent = '公開';
       badge.className = 'art-status-badge badge-published';
@@ -986,126 +908,34 @@
       $('preview-wrap').classList.toggle('mobile', d === 'sp');
     }
 
-    // ── form data ──────────────────────────────────────────────────────────
-    function getFormData() {
-      return {
-        title:       $('f-title').value,
-        category:    $('f-category').value,
-        language:    $('f-language').value,
-        body:        $('f-body').value,
-        author:      $('f-author').value,
-        publishDate: $('f-publish-date').value,
-        perfDate:    $('f-perf-date').value,
-        perfTime:    $('f-perf-time').value,
-        venue:       $('f-venue').value,
-        photoUrl:    $('f-photo-url').value,
-      };
-    }
-
+    // ── form helpers ───────────────────────────────────────────────────────
     function fillForm(d) {
-      $('f-title').value        = d.title       || '';
-      $('f-category').value     = d.category    || '';
-      $('f-language').value     = d.language    || 'ja';
-      $('f-body').value         = d.body        || '';
-      $('f-author').value       = d.author      || '';
-      $('f-publish-date').value = d.publishDate || '';
-      $('f-perf-date').value    = d.perfDate    || '';
-      $('f-perf-time').value    = d.perfTime    || '';
-      $('f-venue').value        = d.venue       || '';
-      $('f-photo-url').value    = d.photoUrl    || '';
+      $('f-title').value        = d.title              || '';
+      $('f-category').value     = d.category           || '';
+      $('f-language').value     = d.language           || 'ja';
+      $('f-body').value         = d.body               || '';
+      $('f-author').value       = d.author             || '';
+      $('f-publish-date').value = d.publishDate        || '';
+      $('f-perf-date').value    = d.performanceDate    || '';
+      $('f-perf-time').value    = d.performanceTime    || '';
+      $('f-venue').value        = d.venue              || '';
+      $('f-photo-url').value    = d.photo              || '';
     }
 
-    // ── draft list ─────────────────────────────────────────────────────────
-    function renderDraftList() {
-      const drafts = getDrafts();
-      const list = $('draft-list');
-
-      if (drafts.length === 0) {
-        list.innerHTML = '<div class="draft-empty">下書きがありません</div>';
-        return;
-      }
-
-      list.innerHTML = drafts.map(d => {
-        const dt = new Date(d.savedAt);
-        const dateStr = `${dt.getFullYear()}/${pad(dt.getMonth()+1)}/${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-        const isCurrent = d.id === currentDraftId;
-        return `
-          <div class="draft-item${isCurrent ? ' current' : ''}">
-            <button class="draft-item-body" onclick="loadDraft('${d.id}')">
-              <span class="draft-item-title">${escHtml(d.title || '（タイトルなし）')}</span>
-              <span class="draft-item-date">${dateStr}</span>
-            </button>
-            <button class="draft-item-delete" onclick="deleteDraft('${d.id}', event)" title="削除">×</button>
-          </div>`;
-      }).join('');
-    }
-
-    function openDraftDropdown() {
-      renderDraftList();
-      $('draft-dropdown').classList.add('open');
-    }
-
-    function closeDraftDropdown() {
-      $('draft-dropdown').classList.remove('open');
-    }
-
-    $('btn-drafts').addEventListener('click', e => {
-      e.stopPropagation();
-      $('draft-dropdown').classList.contains('open') ? closeDraftDropdown() : openDraftDropdown();
-    });
-
-    document.addEventListener('click', () => closeDraftDropdown());
-    $('draft-dropdown').addEventListener('click', e => e.stopPropagation());
-
-    // ── save draft ─────────────────────────────────────────────────────────
-    $('btn-save-draft').addEventListener('click', () => {
-      const drafts = getDrafts();
-      const data   = getFormData();
-      const now    = new Date().toISOString();
-
-      if (currentDraftId) {
-        const idx = drafts.findIndex(d => d.id === currentDraftId);
-        if (idx >= 0) {
-          drafts[idx] = { ...drafts[idx], ...data, savedAt: now };
-        } else {
-          currentDraftId = generateId();
-          drafts.unshift({ id: currentDraftId, ...data, savedAt: now });
-        }
-      } else {
-        currentDraftId = generateId();
-        drafts.unshift({ id: currentDraftId, ...data, savedAt: now });
-      }
-
-      saveDraftsToStorage(drafts);
-      showToast('✓ 下書きを保存しました');
-    });
-
-    // ── load draft ─────────────────────────────────────────────────────────
-    function loadDraft(id) {
-      const drafts = getDrafts();
-      const d = drafts.find(d => d.id === id);
-      if (!d) return;
-      currentDraftId = id;
-      fillForm(d);
-      closeDraftDropdown();
-      updatePreview();
-    }
-
-    // ── delete draft ───────────────────────────────────────────────────────
-    function deleteDraft(id, e) {
-      e.stopPropagation();
-      const drafts = getDrafts().filter(d => d.id !== id);
-      saveDraftsToStorage(drafts);
-      if (currentDraftId === id) currentDraftId = null;
-      renderDraftList();
-    }
-
-    // ── form reset ─────────────────────────────────────────────────────────
-    function resetForm() {
-      currentDraftId = null;
-      fillForm({});
-      $('f-publish-date').value = new Date().toISOString().split('T')[0];
-      updatePreview();
+    function buildPayload(status) {
+      return {
+        title:           $('f-title').value.trim(),
+        category:        $('f-category').value,
+        language:        $('f-language').value,
+        body:            $('f-body').value,
+        author:          $('f-author').value.trim(),
+        publishDate:     $('f-publish-date').value,
+        performanceDate: $('f-perf-date').value,
+        performanceTime: $('f-perf-time').value.trim(),
+        venue:           $('f-venue').value.trim(),
+        photoUrl:        $('f-photo-url').value.trim(),
+        status,
+      };
     }
 
     // ── validation ─────────────────────────────────────────────────────────
@@ -1118,6 +948,76 @@
       return missing;
     }
 
+    // ── edit mode ──────────────────────────────────────────────────────────
+    function setEditMode(article) {
+      editingRowIndex = article.rowIndex;
+      fillForm(article);
+      $('edit-indicator-label').textContent = `編集中：${article.title || '（タイトルなし）'}`;
+      $('edit-indicator').classList.add('visible');
+      updatePreview();
+    }
+
+    function clearEditMode() {
+      editingRowIndex = null;
+      fillForm({});
+      $('f-publish-date').value = new Date().toISOString().split('T')[0];
+      $('edit-indicator').classList.remove('visible');
+      updatePreview();
+    }
+
+    $('btn-new-article').addEventListener('click', () => clearEditMode());
+
+    // ── API送信（共通） ────────────────────────────────────────────────────
+    async function submitToApi(status, btnEl, btnLabel) {
+      const missing = validate();
+      if (missing.length > 0) {
+        showToast(`⚠️ ${missing.join('・')}を入力してください`, 3000, true);
+        return;
+      }
+
+      btnEl.textContent = '送信中...';
+      btnEl.disabled = true;
+
+      const payload = buildPayload(status);
+
+      try {
+        let res;
+        if (editingRowIndex !== null) {
+          res = await fetch(`${API_BASE}/articles/${editingRowIndex}`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+          });
+        } else {
+          res = await fetch(`${API_BASE}/articles`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+          });
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.success) throw new Error('API returned failure');
+
+        const isNew = editingRowIndex === null;
+        showToast(status === 'draft' ? '✓ 下書きを保存しました' : (isNew ? '✓ 投稿しました！' : '✓ 保存しました！'));
+        if (isNew && status === 'published') clearEditMode();
+
+      } catch (err) {
+        console.error(err);
+        showToast('失敗しました。もう一度お試しください。', 3500, true);
+      } finally {
+        btnEl.textContent = btnLabel;
+        btnEl.disabled = false;
+      }
+    }
+
+    $('btn-save-draft').addEventListener('click', () =>
+      submitToApi('draft', $('btn-save-draft'), '下書き保存'));
+
+    $('btn-submit').addEventListener('click', () =>
+      submitToApi('published', $('btn-submit'), '公開して投稿'));
 
     // ── Google Drive URL 変換 ─────────────────────────────────────────────
     function driveUrl(url) {
@@ -1143,7 +1043,6 @@
       this.value = this.value
         .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
         .replace(/：/g, ':');
-      // カーソル位置を保持
       try { this.setSelectionRange(pos, pos); } catch(_) {}
     });
 
@@ -1154,106 +1053,6 @@
         $(id).addEventListener('input', updatePreview);
         $(id).addEventListener('change', updatePreview);
       });
-
-    // ── edit mode state ────────────────────────────────────────────────────
-    let editingRowIndex = null; // null = new article, number = editing row
-
-    function setEditMode(article) {
-      editingRowIndex = article.rowIndex;
-
-      // fill form
-      $('f-title').value        = article.title       || '';
-      $('f-category').value     = article.category    || '';
-      $('f-language').value     = article.language    || 'ja';
-      $('f-body').value         = article.body        || '';
-      $('f-author').value       = article.author      || '';
-      $('f-publish-date').value = article.publishDate || '';
-      $('f-perf-date').value    = article.performanceDate || '';
-      $('f-perf-time').value    = article.performanceTime || '';
-      $('f-venue').value        = article.venue       || '';
-      $('f-photo-url').value    = article.photo       || '';
-
-      // update UI
-      const title = article.title || '（タイトルなし）';
-      $('edit-indicator-label').textContent = `編集中：${title}`;
-      $('edit-indicator').classList.add('visible');
-      $('btn-submit').textContent = '上書き保存';
-      $('btn-submit').className   = 'btn-topbar btn-overwrite';
-
-      updatePreview();
-    }
-
-    function clearEditMode() {
-      editingRowIndex = null;
-      currentDraftId  = null;
-      fillForm({});
-      $('f-publish-date').value = new Date().toISOString().split('T')[0];
-      $('edit-indicator').classList.remove('visible');
-      $('btn-submit').textContent = '公開して投稿';
-      $('btn-submit').className   = 'btn-topbar btn-publish';
-      updatePreview();
-    }
-
-    $('btn-new-article').addEventListener('click', () => clearEditMode());
-
-    // ── submit handler (new or overwrite) ──────────────────────────────────
-    $('btn-submit').addEventListener('click', async () => {
-      const missing = validate();
-      if (missing.length > 0) {
-        showToast(`⚠️ ${missing.join('・')}を入力してください`, 3000, true);
-        return;
-      }
-
-      const btn = $('btn-submit');
-      const isEdit = editingRowIndex !== null;
-      btn.textContent = isEdit ? '保存中...' : '送信中...';
-      btn.disabled = true;
-
-      const payload = {
-        title:           $('f-title').value.trim(),
-        category:        $('f-category').value,
-        language:        $('f-language').value,
-        body:            $('f-body').value,
-        author:          $('f-author').value.trim(),
-        publishDate:     $('f-publish-date').value,
-        performanceDate: $('f-perf-date').value,
-        performanceTime: $('f-perf-time').value.trim(),
-        venue:           $('f-venue').value.trim(),
-        photoUrl:        $('f-photo-url').value.trim(),
-        status:          'published',
-      };
-
-      try {
-        let res;
-        if (isEdit) {
-          res = await fetch(`${API_BASE}/articles/${editingRowIndex}`, {
-            method:  'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload),
-          });
-        } else {
-          res = await fetch(`${API_BASE}/articles`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload),
-          });
-        }
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!data.success) throw new Error('API returned failure');
-
-        showToast(isEdit ? '✓ 保存しました！' : '✓ 投稿しました！');
-        if (!isEdit) clearEditMode();
-
-      } catch (err) {
-        console.error(err);
-        showToast('失敗しました。もう一度お試しください。', 3500, true);
-      } finally {
-        btn.textContent = isEdit ? '上書き保存' : '公開して投稿';
-        btn.disabled = false;
-      }
-    });
 
     // ── search panel ───────────────────────────────────────────────────────
     let searchTimer = null;
@@ -1301,8 +1100,7 @@
         return;
       }
       container.innerHTML = articles.map((a, i) => {
-        const dateStr = a.publishDate || a.performanceDate || '';
-        const metaParts = [a.author, a.category, dateStr].filter(Boolean);
+        const metaParts = [a.author, a.category, a.publishDate].filter(Boolean);
         return `
           <button class="search-result-item" data-idx="${i}">
             <span class="search-result-title">${escHtml(a.title || '（タイトルなし）')}</span>
@@ -1310,9 +1108,7 @@
           </button>`;
       }).join('');
 
-      // store results on container for click handler
       container._results = articles;
-
       container.querySelectorAll('.search-result-item').forEach(btn => {
         btn.addEventListener('click', () => {
           const article = container._results[parseInt(btn.dataset.idx, 10)];
@@ -1323,9 +1119,7 @@
     }
 
     // ── init ───────────────────────────────────────────────────────────────
-    if (!$('f-publish-date').value) {
-      $('f-publish-date').value = new Date().toISOString().split('T')[0];
-    }
+    $('f-publish-date').value = new Date().toISOString().split('T')[0];
     updatePreview();
   </script>
 
