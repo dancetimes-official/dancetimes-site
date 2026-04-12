@@ -638,7 +638,8 @@
         <div class="field-group">
           <label class="field-label" for="f-photo-url">写真URL</label>
           <input class="field-input" id="f-photo-url" type="url" placeholder="例：https://example.com/photo.jpg" />
-          <div class="field-meta">公開済みの画像URLを入力してください</div>
+          <div class="field-meta">Google Driveやlivedoorブログにアップロードした画像の公開URLを入力してください</div>
+          <div class="field-meta" style="margin-top:4px; color:#b45309;">※ Google Driveの共有リンクをそのまま貼ると表示されません。画像の直接URLを取得してください</div>
         </div>
       </div>
 
@@ -1000,6 +1001,34 @@
         btn.textContent = '公開して投稿';
         btn.disabled = false;
       }
+    });
+
+    // ── Google Drive URL 変換 ─────────────────────────────────────────────
+    function driveUrl(url) {
+      if (!url) return url;
+      const m1 = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
+      if (m1) return `https://drive.google.com/uc?export=view&id=${m1[1]}`;
+      const m2 = url.match(/drive\.google\.com\/open\?id=([^&\s]+)/);
+      if (m2) return `https://drive.google.com/uc?export=view&id=${m2[1]}`;
+      return url;
+    }
+
+    $('f-photo-url').addEventListener('change', function () {
+      const converted = driveUrl(this.value.trim());
+      if (converted !== this.value.trim()) {
+        this.value = converted;
+        updatePreview();
+      }
+    });
+
+    // ── 全角→半角変換（公演時間） ────────────────────────────────────────────
+    $('f-perf-time').addEventListener('input', function () {
+      const pos = this.selectionStart;
+      this.value = this.value
+        .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+        .replace(/：/g, ':');
+      // カーソル位置を保持
+      try { this.setSelectionRange(pos, pos); } catch(_) {}
     });
 
     // ── live update ────────────────────────────────────────────────────────
