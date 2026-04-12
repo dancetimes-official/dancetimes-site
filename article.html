@@ -416,8 +416,8 @@
     // ── ページタイトル ──
     document.title = `${title} | The Dance Times`;
 
-    // ── 本文: archive は HTML, articles は テキスト ──
-    const bodyHtml = source === 'archive'
+    // ── 本文: HTMLならそのまま描画、プレーンテキストなら段落変換 ──
+    const bodyHtml = body.trimStart().startsWith('<')
       ? body
       : body.split('\n').filter(l => l.trim()).map(l => `<p>${esc(l)}</p>`).join('');
 
