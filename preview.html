@@ -504,6 +504,144 @@
     }
     .toast.error { background: #b91c1c; }
 
+    /* ===== SEARCH PANEL ===== */
+    .search-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      pointer-events: none;
+    }
+    .search-overlay.open { pointer-events: all; }
+
+    .search-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .search-overlay.open .search-backdrop { opacity: 1; }
+
+    .search-panel {
+      position: absolute;
+      top: 48px;
+      left: 0;
+      width: 400px;
+      max-width: 100vw;
+      height: calc(100vh - 48px);
+      background: #181818;
+      border-right: 1px solid #2e2e2e;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      box-shadow: 4px 0 32px rgba(0,0,0,0.5);
+    }
+    .search-overlay.open .search-panel { transform: translateX(0); }
+
+    .search-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid #2e2e2e;
+      flex-shrink: 0;
+    }
+    .search-panel-title {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #777;
+    }
+    .search-close-btn {
+      background: none; border: none;
+      color: #555; font-size: 1rem;
+      cursor: pointer; padding: 4px 8px;
+      border-radius: var(--radius);
+      transition: color 0.15s;
+      line-height: 1;
+    }
+    .search-close-btn:hover { color: #ccc; }
+
+    .search-input-wrap {
+      padding: 14px 20px;
+      border-bottom: 1px solid #222;
+      flex-shrink: 0;
+    }
+    .search-input {
+      width: 100%;
+      background: #111;
+      border: 1px solid #2e2e2e;
+      border-radius: var(--radius);
+      color: #ddd;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: #3a3a3a; }
+
+    .search-results { flex: 1; overflow-y: auto; }
+    .search-result-item {
+      display: block; width: 100%;
+      background: none; border: none;
+      border-bottom: 1px solid #1e1e1e;
+      padding: 12px 20px;
+      text-align: left; cursor: pointer;
+      transition: background 0.12s;
+    }
+    .search-result-item:hover { background: #222; }
+    .search-result-title {
+      font-family: var(--font-body);
+      font-size: 0.82rem; color: #ddd;
+      display: block;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .search-result-meta {
+      font-family: var(--font-mono);
+      font-size: 0.58rem; color: #555;
+      letter-spacing: 0.04em; display: block;
+    }
+    .search-msg {
+      font-family: var(--font-mono);
+      font-size: 0.62rem; letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #3a3a3a; text-align: center;
+      padding: 40px 20px;
+    }
+
+    /* ===== EDIT MODE ===== */
+    .edit-indicator {
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .edit-indicator.visible { display: flex; }
+    .edit-indicator-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem; letter-spacing: 0.06em;
+      color: var(--gold);
+      max-width: 180px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .btn-new {
+      background: transparent; color: #888;
+      border: 1px solid #3a3a3a;
+    }
+    .btn-new:hover { background: #2a2a2a; color: #ccc; }
+    .btn-edit-search {
+      background: #2a2a2a; color: #aaa;
+    }
+    .btn-edit-search:hover { background: #333; color: #ccc; }
+    .btn-overwrite {
+      background: var(--gold); color: #1a1a1a;
+    }
+    .btn-overwrite:hover { background: #d4ae7a; }
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 900px) {
       .layout {
@@ -540,8 +678,13 @@
           <div class="draft-list" id="draft-list"></div>
         </div>
       </div>
+      <div class="edit-indicator" id="edit-indicator">
+        <span class="edit-indicator-label" id="edit-indicator-label"></span>
+        <button class="btn-topbar btn-new" id="btn-new-article">新規作成</button>
+      </div>
     </div>
     <div class="topbar-right">
+      <button class="btn-topbar btn-edit-search" id="btn-open-search">記事を編集</button>
       <button class="btn-topbar btn-draft" id="btn-save-draft">下書き保存</button>
       <button class="btn-topbar btn-publish" id="btn-submit">公開して投稿</button>
     </div>
@@ -706,6 +849,24 @@
     </div><!-- /preview-panel -->
 
   </div><!-- /layout -->
+
+  <!-- ===== SEARCH PANEL ===== -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-backdrop" id="search-backdrop"></div>
+    <div class="search-panel">
+      <div class="search-panel-header">
+        <span class="search-panel-title">記事を検索して編集</span>
+        <button class="search-close-btn" id="btn-close-search">✕</button>
+      </div>
+      <div class="search-input-wrap">
+        <input class="search-input" id="search-input" type="text"
+          placeholder="タイトル・著者・カテゴリで検索..." autocomplete="off" />
+      </div>
+      <div class="search-results" id="search-results">
+        <div class="search-msg">キーワードを入力してください</div>
+      </div>
+    </div>
+  </div>
 
   <!-- toast -->
   <div class="toast" id="toast"></div>
@@ -957,52 +1118,6 @@
       return missing;
     }
 
-    // ── submit to API (always published) ───────────────────────────────────
-    $('btn-submit').addEventListener('click', async () => {
-      const missing = validate();
-      if (missing.length > 0) {
-        showToast(`⚠️ ${missing.join('・')}を入力してください`, 3000, true);
-        return;
-      }
-
-      const btn = $('btn-submit');
-      btn.textContent = '送信中...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(`${API_BASE}/articles`, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title:           $('f-title').value.trim(),
-            category:        $('f-category').value,
-            language:        $('f-language').value,
-            body:            $('f-body').value,
-            author:          $('f-author').value.trim(),
-            publishDate:     $('f-publish-date').value,
-            performanceDate: $('f-perf-date').value,
-            performanceTime: $('f-perf-time').value.trim(),
-            venue:           $('f-venue').value.trim(),
-            photoUrl:        $('f-photo-url').value.trim(),
-            status:          'published',
-          }),
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!data.success) throw new Error('API returned failure');
-
-        showToast('✓ 投稿しました！');
-        resetForm();
-
-      } catch (err) {
-        console.error(err);
-        showToast('投稿に失敗しました。もう一度お試しください。', 3500, true);
-      } finally {
-        btn.textContent = '公開して投稿';
-        btn.disabled = false;
-      }
-    });
 
     // ── Google Drive URL 変換 ─────────────────────────────────────────────
     function driveUrl(url) {
@@ -1039,6 +1154,173 @@
         $(id).addEventListener('input', updatePreview);
         $(id).addEventListener('change', updatePreview);
       });
+
+    // ── edit mode state ────────────────────────────────────────────────────
+    let editingRowIndex = null; // null = new article, number = editing row
+
+    function setEditMode(article) {
+      editingRowIndex = article.rowIndex;
+
+      // fill form
+      $('f-title').value        = article.title       || '';
+      $('f-category').value     = article.category    || '';
+      $('f-language').value     = article.language    || 'ja';
+      $('f-body').value         = article.body        || '';
+      $('f-author').value       = article.author      || '';
+      $('f-publish-date').value = article.publishDate || '';
+      $('f-perf-date').value    = article.performanceDate || '';
+      $('f-perf-time').value    = article.performanceTime || '';
+      $('f-venue').value        = article.venue       || '';
+      $('f-photo-url').value    = article.photo       || '';
+
+      // update UI
+      const title = article.title || '（タイトルなし）';
+      $('edit-indicator-label').textContent = `編集中：${title}`;
+      $('edit-indicator').classList.add('visible');
+      $('btn-submit').textContent = '上書き保存';
+      $('btn-submit').className   = 'btn-topbar btn-overwrite';
+
+      updatePreview();
+    }
+
+    function clearEditMode() {
+      editingRowIndex = null;
+      currentDraftId  = null;
+      fillForm({});
+      $('f-publish-date').value = new Date().toISOString().split('T')[0];
+      $('edit-indicator').classList.remove('visible');
+      $('btn-submit').textContent = '公開して投稿';
+      $('btn-submit').className   = 'btn-topbar btn-publish';
+      updatePreview();
+    }
+
+    $('btn-new-article').addEventListener('click', () => clearEditMode());
+
+    // ── submit handler (new or overwrite) ──────────────────────────────────
+    $('btn-submit').addEventListener('click', async () => {
+      const missing = validate();
+      if (missing.length > 0) {
+        showToast(`⚠️ ${missing.join('・')}を入力してください`, 3000, true);
+        return;
+      }
+
+      const btn = $('btn-submit');
+      const isEdit = editingRowIndex !== null;
+      btn.textContent = isEdit ? '保存中...' : '送信中...';
+      btn.disabled = true;
+
+      const payload = {
+        title:           $('f-title').value.trim(),
+        category:        $('f-category').value,
+        language:        $('f-language').value,
+        body:            $('f-body').value,
+        author:          $('f-author').value.trim(),
+        publishDate:     $('f-publish-date').value,
+        performanceDate: $('f-perf-date').value,
+        performanceTime: $('f-perf-time').value.trim(),
+        venue:           $('f-venue').value.trim(),
+        photoUrl:        $('f-photo-url').value.trim(),
+        status:          'published',
+      };
+
+      try {
+        let res;
+        if (isEdit) {
+          res = await fetch(`${API_BASE}/articles/${editingRowIndex}`, {
+            method:  'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+          });
+        } else {
+          res = await fetch(`${API_BASE}/articles`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+          });
+        }
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.success) throw new Error('API returned failure');
+
+        showToast(isEdit ? '✓ 保存しました！' : '✓ 投稿しました！');
+        if (!isEdit) clearEditMode();
+
+      } catch (err) {
+        console.error(err);
+        showToast('失敗しました。もう一度お試しください。', 3500, true);
+      } finally {
+        btn.textContent = isEdit ? '上書き保存' : '公開して投稿';
+        btn.disabled = false;
+      }
+    });
+
+    // ── search panel ───────────────────────────────────────────────────────
+    let searchTimer = null;
+
+    function openSearchPanel() {
+      $('search-overlay').classList.add('open');
+      setTimeout(() => $('search-input').focus(), 260);
+    }
+
+    function closeSearchPanel() {
+      $('search-overlay').classList.remove('open');
+    }
+
+    $('btn-open-search').addEventListener('click', openSearchPanel);
+    $('btn-close-search').addEventListener('click', closeSearchPanel);
+    $('search-backdrop').addEventListener('click', closeSearchPanel);
+
+    $('search-input').addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      const q = this.value.trim();
+      if (q === '') {
+        $('search-results').innerHTML = '<div class="search-msg">キーワードを入力してください</div>';
+        return;
+      }
+      $('search-results').innerHTML = '<div class="search-msg">検索中...</div>';
+      searchTimer = setTimeout(() => performSearch(q), 300);
+    });
+
+    async function performSearch(q) {
+      try {
+        const res = await fetch(`${API_BASE}/articles/search?q=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const articles = await res.json();
+        renderSearchResults(articles);
+      } catch (err) {
+        $('search-results').innerHTML = '<div class="search-msg">検索に失敗しました</div>';
+        console.error(err);
+      }
+    }
+
+    function renderSearchResults(articles) {
+      const container = $('search-results');
+      if (articles.length === 0) {
+        container.innerHTML = '<div class="search-msg">該当記事が見つかりませんでした</div>';
+        return;
+      }
+      container.innerHTML = articles.map((a, i) => {
+        const dateStr = a.publishDate || a.performanceDate || '';
+        const metaParts = [a.author, a.category, dateStr].filter(Boolean);
+        return `
+          <button class="search-result-item" data-idx="${i}">
+            <span class="search-result-title">${escHtml(a.title || '（タイトルなし）')}</span>
+            <span class="search-result-meta">${escHtml(metaParts.join(' · '))}</span>
+          </button>`;
+      }).join('');
+
+      // store results on container for click handler
+      container._results = articles;
+
+      container.querySelectorAll('.search-result-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const article = container._results[parseInt(btn.dataset.idx, 10)];
+          closeSearchPanel();
+          setEditMode(article);
+        });
+      });
+    }
 
     // ── init ───────────────────────────────────────────────────────────────
     if (!$('f-publish-date').value) {
