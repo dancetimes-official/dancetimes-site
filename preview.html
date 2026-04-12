@@ -210,33 +210,6 @@
       font-weight: 600;
     }
 
-    /* photo upload */
-    .photo-drop {
-      border: 1px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.15s;
-      background: var(--bg-card);
-    }
-    .photo-drop:hover { border-color: var(--accent); background: var(--accent-soft); }
-    .photo-drop-text {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.08em;
-      color: var(--text-sub);
-      text-transform: uppercase;
-    }
-    .photo-preview-thumb {
-      width: 100%;
-      max-height: 120px;
-      object-fit: cover;
-      border-radius: var(--radius);
-      margin-top: 8px;
-      display: none;
-    }
-
     /* char counter */
     .char-counter {
       font-family: var(--font-mono);
@@ -506,6 +479,7 @@
       opacity: 1;
       transform: translateY(0);
     }
+    .toast.error { background: #b91c1c; }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 900px) {
@@ -540,7 +514,7 @@
     </div>
     <div class="topbar-right">
       <button class="btn-topbar btn-draft" id="btn-save-draft">下書き保存</button>
-      <button class="btn-topbar btn-publish" id="btn-open-form">Googleフォームで投稿 →</button>
+      <button class="btn-topbar btn-publish" id="btn-submit">投稿する</button>
     </div>
   </div>
 
@@ -640,15 +614,14 @@
         </div>
       </div>
 
-      <!-- 写真 -->
+      <!-- 写真URL -->
       <div>
-        <div class="editor-section-title">写真（任意）</div>
-        <div class="photo-drop" id="photo-drop" onclick="document.getElementById('f-photo').click()">
-          <div class="photo-drop-text">📷　クリックして写真を選択</div>
-          <div class="field-meta" style="margin-top:6px;">JPG / PNG / WebP　最大10MB</div>
-          <img class="photo-preview-thumb" id="photo-thumb" alt="プレビュー" />
+        <div class="editor-section-title">写真URL（任意）</div>
+        <div class="field-group">
+          <label class="field-label" for="f-photo-url">写真URL</label>
+          <input class="field-input" id="f-photo-url" type="url" placeholder="例：https://example.com/photo.jpg" />
+          <div class="field-meta">公開済みの画像URLを入力してください</div>
         </div>
-        <input type="file" id="f-photo" accept="image/*" style="display:none" />
       </div>
 
     </div><!-- /editor-panel -->
@@ -718,17 +691,19 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
+
     // ── state ──────────────────────────────────────────────────────────────
     let currentStatus = 'draft';
     let currentDevice = 'pc';
-    let photoDataUrl   = null;
 
     // ── helpers ────────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
 
-    function showToast(msg, duration = 2200) {
+    function showToast(msg, duration = 2400, isError = false) {
       const t = $('toast');
       t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), duration);
     }
@@ -757,6 +732,7 @@
       const perfDate    = $('f-perf-date').value;
       const perfTime    = $('f-perf-time').value.trim();
       const venue       = $('f-venue').value.trim();
+      const photoUrl    = $('f-photo-url').value.trim();
 
       // title
       const titleEl = $('prev-title');
@@ -811,9 +787,10 @@
 
       // photo
       const photoEl = $('prev-photo');
-      if (photoDataUrl) {
-        photoEl.src = photoDataUrl;
+      if (photoUrl) {
+        photoEl.src = photoUrl;
         photoEl.classList.add('visible');
+        photoEl.onerror = () => photoEl.classList.remove('visible');
       } else {
         photoEl.classList.remove('visible');
       }
@@ -835,25 +812,6 @@
       $('preview-wrap').classList.toggle('mobile', d === 'sp');
     }
 
-    // ── photo upload ───────────────────────────────────────────────────────
-    $('f-photo').addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      if (file.size > 10 * 1024 * 1024) {
-        showToast('⚠️ 10MBを超えるファイルは選択できません');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = ev => {
-        photoDataUrl = ev.target.result;
-        const thumb = $('photo-thumb');
-        thumb.src = photoDataUrl;
-        thumb.style.display = 'block';
-        updatePreview();
-      };
-      reader.readAsDataURL(file);
-    });
-
     // ── draft save (localStorage) ──────────────────────────────────────────
     function getDraftData() {
       return {
@@ -866,20 +824,19 @@
         perfDate:    $('f-perf-date').value,
         perfTime:    $('f-perf-time').value,
         venue:       $('f-venue').value,
+        photoUrl:    $('f-photo-url').value,
         status:      currentStatus,
         savedAt:     new Date().toISOString(),
       };
     }
 
     $('btn-save-draft').addEventListener('click', () => {
-      const data = getDraftData();
-      // sessionStorageを使用（ページを閉じると消える）
-      sessionStorage.setItem('dancetimes-draft', JSON.stringify(data));
+      localStorage.setItem('dancetimes-draft', JSON.stringify(getDraftData()));
       showToast('✓ 下書きを保存しました');
     });
 
     // restore draft on load
-    const saved = sessionStorage.getItem('dancetimes-draft');
+    const saved = localStorage.getItem('dancetimes-draft');
     if (saved) {
       try {
         const d = JSON.parse(saved);
@@ -892,28 +849,94 @@
         $('f-perf-date').value    = d.perfDate    || '';
         $('f-perf-time').value    = d.perfTime    || '';
         $('f-venue').value        = d.venue       || '';
+        $('f-photo-url').value    = d.photoUrl    || '';
         if (d.status) setStatus(d.status);
       } catch(e) {}
     }
 
-    // ── open Google Form ───────────────────────────────────────────────────
-    $('btn-open-form').addEventListener('click', () => {
-      // ★ ここにGoogleフォームのURLを設定してください
-      const FORM_URL = 'https://docs.google.com/forms/d/YOUR_FORM_ID/viewform';
-      showToast('Googleフォームを開きます...');
-      setTimeout(() => window.open(FORM_URL, '_blank'), 800);
+    // ── form reset ─────────────────────────────────────────────────────────
+    function resetForm() {
+      $('f-title').value        = '';
+      $('f-category').value     = '';
+      $('f-language').value     = 'ja';
+      $('f-body').value         = '';
+      $('f-author').value       = '';
+      $('f-publish-date').value = new Date().toISOString().split('T')[0];
+      $('f-perf-date').value    = '';
+      $('f-perf-time').value    = '';
+      $('f-venue').value        = '';
+      $('f-photo-url').value    = '';
+      setStatus('draft');
+      localStorage.removeItem('dancetimes-draft');
+      updatePreview();
+    }
+
+    // ── validation ─────────────────────────────────────────────────────────
+    function validate() {
+      const missing = [];
+      if (!$('f-title').value.trim())    missing.push('タイトル');
+      if (!$('f-category').value)        missing.push('カテゴリ');
+      if (!$('f-author').value.trim())   missing.push('執筆者名');
+      if (!$('f-body').value.trim())     missing.push('本文');
+      return missing;
+    }
+
+    // ── submit to API ──────────────────────────────────────────────────────
+    $('btn-submit').addEventListener('click', async () => {
+      const missing = validate();
+      if (missing.length > 0) {
+        showToast(`⚠️ ${missing.join('・')}を入力してください`, 3000, true);
+        return;
+      }
+
+      const btn = $('btn-submit');
+      btn.textContent = '送信中...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/articles`, {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title:           $('f-title').value.trim(),
+            category:        $('f-category').value,
+            language:        $('f-language').value,
+            body:            $('f-body').value,
+            author:          $('f-author').value.trim(),
+            publishDate:     $('f-publish-date').value,
+            performanceDate: $('f-perf-date').value,
+            performanceTime: $('f-perf-time').value.trim(),
+            venue:           $('f-venue').value.trim(),
+            photoUrl:        $('f-photo-url').value.trim(),
+            status:          currentStatus,
+          }),
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.success) throw new Error('API returned failure');
+
+        showToast('✓ 投稿しました！');
+        resetForm();
+
+      } catch (err) {
+        console.error(err);
+        showToast('投稿に失敗しました。もう一度お試しください。', 3500, true);
+      } finally {
+        btn.textContent = '投稿する';
+        btn.disabled = false;
+      }
     });
 
     // ── live update ────────────────────────────────────────────────────────
     ['f-title','f-category','f-language','f-body',
-     'f-author','f-publish-date','f-perf-date','f-perf-time','f-venue']
+     'f-author','f-publish-date','f-perf-date','f-perf-time','f-venue','f-photo-url']
       .forEach(id => {
         $(id).addEventListener('input', updatePreview);
         $(id).addEventListener('change', updatePreview);
       });
 
     // ── init ───────────────────────────────────────────────────────────────
-    // set today as default publish date
     if (!$('f-publish-date').value) {
       $('f-publish-date').value = new Date().toISOString().split('T')[0];
     }
