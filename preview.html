@@ -97,6 +97,36 @@
     }
     .btn-publish:hover { background: var(--accent-dark); }
 
+    /* topbar status toggle */
+    .topbar-status-toggle {
+      display: flex;
+      background: #2a2a2a;
+      border-radius: 999px;
+      padding: 2px;
+      gap: 1px;
+    }
+    .topbar-status-btn {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 11px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .topbar-status-btn.active-draft {
+      background: rgba(201,169,110,0.22);
+      color: var(--gold);
+    }
+    .topbar-status-btn.active-publish {
+      background: rgba(110,201,193,0.22);
+      color: var(--accent);
+    }
+
     /* ===== LAYOUT ===== */
     .layout {
       display: grid;
@@ -176,39 +206,6 @@
       margin-top: 2px;
     }
 
-    /* status badges */
-    .status-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .status-btn {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--bg-card);
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-sub);
-      cursor: pointer;
-      transition: all 0.15s;
-      text-align: center;
-    }
-    .status-btn.active-draft {
-      border-color: var(--gold);
-      background: rgba(201,169,110,0.1);
-      color: var(--gold);
-      font-weight: 600;
-    }
-    .status-btn.active-publish {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent-dark);
-      font-weight: 600;
-    }
 
     /* char counter */
     .char-counter {
@@ -513,6 +510,10 @@
       <span class="topbar-label">投稿プレビュー</span>
     </div>
     <div class="topbar-right">
+      <div class="topbar-status-toggle">
+        <button class="topbar-status-btn active-draft" id="btn-status-draft" onclick="setStatus('draft')">下書き</button>
+        <button class="topbar-status-btn" id="btn-status-publish" onclick="setStatus('published')">公開</button>
+      </div>
       <button class="btn-topbar btn-draft" id="btn-save-draft">下書き保存</button>
       <button class="btn-topbar btn-publish" id="btn-submit">投稿する</button>
     </div>
@@ -601,17 +602,6 @@
           </div>
         </div>
 
-        <div style="margin-top:10px;">
-          <div class="field-label" style="margin-bottom:6px;">公開フラグ</div>
-          <div class="status-row">
-            <button class="status-btn active-draft" id="btn-status-draft" onclick="setStatus('draft')">
-              下書き
-            </button>
-            <button class="status-btn" id="btn-status-publish" onclick="setStatus('published')">
-              公開
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- 写真URL -->
@@ -799,8 +789,8 @@
     // ── status toggle ──────────────────────────────────────────────────────
     function setStatus(s) {
       currentStatus = s;
-      $('btn-status-draft').className   = 'status-btn' + (s === 'draft'     ? ' active-draft'   : '');
-      $('btn-status-publish').className = 'status-btn' + (s === 'published' ? ' active-publish' : '');
+      $('btn-status-draft').className   = 'topbar-status-btn' + (s === 'draft'     ? ' active-draft'   : '');
+      $('btn-status-publish').className = 'topbar-status-btn' + (s === 'published' ? ' active-publish' : '');
       updatePreview();
     }
 
