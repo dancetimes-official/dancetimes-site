@@ -416,8 +416,8 @@
     // ── ページタイトル ──
     document.title = `${title} | The Dance Times`;
 
-    // ── 本文: HTMLならそのまま描画、プレーンテキストなら段落変換 ──
-    const bodyHtml = body.trimStart().startsWith('<')
+    // ── 本文: HTMLタグを含む場合はそのままinnerHTMLに、プレーンテキストなら段落変換 ──
+    const bodyHtml = /<[a-z][\s\S]*?>/i.test(body)
       ? body
       : body.split('\n').filter(l => l.trim()).map(l => `<p>${esc(l)}</p>`).join('');
 
