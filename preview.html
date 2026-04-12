@@ -652,6 +652,28 @@
       pointer-events: none;
       display: block;
     }
+    .rte-btn.source-mode {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-dark);
+    }
+    .rte-source {
+      display: none;
+      width: 100%;
+      min-height: 320px;
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--bg-card);
+      border: none;
+      outline: none;
+      resize: vertical;
+    }
+    .rte-source.visible { display: block; }
+    .rte-editor.hidden  { display: none; }
+
     .rte-editor p { margin-bottom: 0.8em; }
     .rte-editor p:last-child { margin-bottom: 0; }
     .rte-editor a { color: var(--accent-dark); text-decoration: underline; }
@@ -817,9 +839,12 @@
               <span class="rte-sep"></span>
               <button class="rte-btn" id="rte-link" title="リンク挿入">リンク</button>
               <button class="rte-btn" id="rte-image" title="画像挿入">画像</button>
+              <span class="rte-sep"></span>
+              <button class="rte-btn" id="rte-source" title="HTMLソースを編集">HTML</button>
             </div>
             <div class="rte-editor" id="f-body" contenteditable="true"
                  data-placeholder="記事本文を入力してください。"></div>
+            <textarea class="rte-source" id="f-body-source" spellcheck="false"></textarea>
           </div>
           <div class="char-counter"><span id="char-count">0</span> 文字</div>
         </div>
@@ -1108,8 +1133,20 @@
       updatePreview();
     }
 
+    function exitSourceMode() {
+      if (!isSourceMode) return;
+      $('f-body').innerHTML = $('f-body-source').value;
+      $('f-body-source').classList.remove('visible');
+      $('f-body').classList.remove('hidden');
+      $('rte-source').classList.remove('source-mode');
+      ['rte-bold','rte-italic','rte-link','rte-image'].forEach(id =>
+        $(id).disabled = false);
+      isSourceMode = false;
+    }
+
     function clearEditMode() {
       editingRowIndex = null;
+      exitSourceMode();
       fillForm({});
       $('f-body').innerHTML = '';
       $('f-publish-date').value = new Date().toISOString().split('T')[0];
@@ -1214,6 +1251,42 @@
           $('f-body').contains(document.activeElement)) {
         updateToolbarState();
       }
+    });
+
+    // ── ソースモード切り替え ────────────────────────────────────────────────
+    let isSourceMode = false;
+
+    $('rte-source').addEventListener('click', () => {
+      const editor = $('f-body');
+      const source = $('f-body-source');
+      const btn    = $('rte-source');
+
+      if (!isSourceMode) {
+        // WYSIWYG → ソース
+        source.value = editor.innerHTML;
+        editor.classList.add('hidden');
+        source.classList.add('visible');
+        btn.classList.add('source-mode');
+        // リッチテキストボタンを無効化
+        ['rte-bold','rte-italic','rte-link','rte-image'].forEach(id =>
+          $(id).disabled = true);
+      } else {
+        // ソース → WYSIWYG
+        editor.innerHTML = source.value;
+        source.classList.remove('visible');
+        editor.classList.remove('hidden');
+        btn.classList.remove('source-mode');
+        ['rte-bold','rte-italic','rte-link','rte-image'].forEach(id =>
+          $(id).disabled = false);
+        updatePreview();
+      }
+      isSourceMode = !isSourceMode;
+    });
+
+    // ソースモード中もリアルタイムプレビューに反映
+    $('f-body-source').addEventListener('input', () => {
+      $('f-body').innerHTML = $('f-body-source').value;
+      updatePreview();
     });
 
     $('rte-bold').addEventListener('click', () => execCmd('bold'));
