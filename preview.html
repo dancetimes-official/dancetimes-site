@@ -586,6 +586,126 @@
     }
     .btn-overwrite:hover { background: #d4ae7a; }
 
+    /* ===== RICH TEXT EDITOR ===== */
+    .rte-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.15s;
+    }
+    .rte-wrap:focus-within { border-color: var(--accent); }
+
+    .rte-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 5px 8px;
+      background: #e8e7e3;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .rte-btn {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 4px 9px;
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.12s;
+      line-height: 1.4;
+      min-width: 28px;
+      text-align: center;
+    }
+    .rte-btn:hover {
+      background: var(--bg-card);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .rte-btn.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-dark);
+    }
+    .rte-sep {
+      width: 1px; height: 16px;
+      background: var(--border);
+      margin: 0 4px; flex-shrink: 0;
+    }
+    .rte-editor {
+      min-height: 320px;
+      padding: 10px 10px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      line-height: 1.8;
+      color: var(--text);
+      outline: none;
+      overflow-y: auto;
+    }
+    .rte-editor:empty::before {
+      content: attr(data-placeholder);
+      color: #bbb;
+      pointer-events: none;
+      display: block;
+    }
+    .rte-editor p { margin-bottom: 0.8em; }
+    .rte-editor p:last-child { margin-bottom: 0; }
+    .rte-editor a { color: var(--accent-dark); text-decoration: underline; }
+    .rte-editor img {
+      max-width: 100%; height: auto;
+      display: block; margin: 8px 0;
+      border-radius: var(--radius);
+    }
+
+    /* RTE modal */
+    .rte-modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 700;
+      align-items: center; justify-content: center;
+    }
+    .rte-modal-overlay.open { display: flex; }
+    .rte-modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      width: 360px; max-width: 90vw;
+      display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .rte-modal-title {
+      font-family: var(--font-mono);
+      font-size: 0.65rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-sub);
+    }
+    .rte-modal-input {
+      width: 100%; padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font-body); font-size: 0.85rem;
+      outline: none; transition: border-color 0.15s;
+    }
+    .rte-modal-input:focus { border-color: var(--accent); }
+    .rte-modal-actions {
+      display: flex; gap: 8px; justify-content: flex-end;
+    }
+    .rte-modal-btn {
+      font-family: var(--font-mono);
+      font-size: 0.65rem; letter-spacing: 0.08em;
+      padding: 6px 14px; border-radius: var(--radius);
+      cursor: pointer; border: none; transition: all 0.15s;
+    }
+    .rte-modal-btn-cancel { background: #e4e3df; color: var(--text-sub); }
+    .rte-modal-btn-cancel:hover { background: #d8d7d2; }
+    .rte-modal-btn-ok { background: var(--accent); color: #fff; }
+    .rte-modal-btn-ok:hover { background: var(--accent-dark); }
+
     /* ===== RESPONSIVE ===== */
     @media (max-width: 900px) {
       .layout {
@@ -689,9 +809,18 @@
       <div>
         <div class="editor-section-title">本文</div>
         <div class="field-group">
-          <label class="field-label" for="f-body">本文 <span class="required">*</span></label>
-          <textarea class="field-textarea" id="f-body"
-            placeholder="記事本文を入力してください。段落は空行で区切ってください。"></textarea>
+          <label class="field-label">本文 <span class="required">*</span></label>
+          <div class="rte-wrap">
+            <div class="rte-toolbar">
+              <button class="rte-btn" id="rte-bold" title="ボールド (Ctrl+B)"><b>B</b></button>
+              <button class="rte-btn" id="rte-italic" title="イタリック (Ctrl+I)"><i>I</i></button>
+              <span class="rte-sep"></span>
+              <button class="rte-btn" id="rte-link" title="リンク挿入">リンク</button>
+              <button class="rte-btn" id="rte-image" title="画像挿入">画像</button>
+            </div>
+            <div class="rte-editor" id="f-body" contenteditable="true"
+                 data-placeholder="記事本文を入力してください。"></div>
+          </div>
           <div class="char-counter"><span id="char-count">0</span> 文字</div>
         </div>
       </div>
@@ -805,6 +934,18 @@
     </div>
   </div>
 
+  <!-- RTE modal -->
+  <div class="rte-modal-overlay" id="rte-modal-overlay">
+    <div class="rte-modal">
+      <div class="rte-modal-title" id="rte-modal-title">URLを入力</div>
+      <input class="rte-modal-input" id="rte-modal-input" type="url" placeholder="https://" />
+      <div class="rte-modal-actions">
+        <button class="rte-modal-btn rte-modal-btn-cancel" id="rte-modal-cancel">キャンセル</button>
+        <button class="rte-modal-btn rte-modal-btn-ok" id="rte-modal-ok">挿入</button>
+      </div>
+    </div>
+  </div>
+
   <!-- toast -->
   <div class="toast" id="toast"></div>
 
@@ -838,8 +979,9 @@
       return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}`;
     }
 
-    function bodyToHtml(text) {
-      if (!text.trim()) return '<p class="art-body-placeholder">本文を入力するとここにプレビューが表示されます。</p>';
+    // プレーンテキスト→HTML変換（既存記事の後方互換用）
+    function plainTextToHtml(text) {
+      if (!text.trim()) return '';
       return text.split(/\n\n+/)
         .map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`)
         .join('');
@@ -850,7 +992,9 @@
       const title       = $('f-title').value.trim();
       const category    = $('f-category').value;
       const language    = $('f-language').value;
-      const body        = $('f-body').value;
+      const bodyEl      = $('f-body');
+      const bodyHtml    = bodyEl.innerHTML;
+      const bodyText    = bodyEl.innerText || '';
       const author      = $('f-author').value.trim();
       const publishDate = $('f-publish-date').value;
       const perfDate    = $('f-perf-date').value;
@@ -873,8 +1017,10 @@
       langEl.textContent = language === 'en' ? 'EN' : 'JA';
       langEl.className = 'art-lang' + (language === 'en' ? ' en' : '');
 
-      $('prev-body').innerHTML = bodyToHtml(body);
-      $('char-count').textContent = body.length.toLocaleString();
+      $('prev-body').innerHTML = bodyText.trim()
+        ? bodyHtml
+        : '<p class="art-body-placeholder">本文を入力するとここにプレビューが表示されます。</p>';
+      $('char-count').textContent = bodyText.trim().length.toLocaleString();
       $('prev-author').textContent = author ? `執筆者：${author}` : '執筆者：──';
       $('prev-publish-date').textContent = formatDate(publishDate);
       $('prev-venue').textContent = venue || '──';
@@ -913,13 +1059,17 @@
       $('f-title').value        = d.title              || '';
       $('f-category').value     = d.category           || '';
       $('f-language').value     = d.language           || 'ja';
-      $('f-body').value         = d.body               || '';
       $('f-author').value       = d.author             || '';
       $('f-publish-date').value = d.publishDate        || '';
       $('f-perf-date').value    = d.performanceDate    || '';
       $('f-perf-time').value    = d.performanceTime    || '';
       $('f-venue').value        = d.venue              || '';
       $('f-photo-url').value    = d.photo              || '';
+      // 本文: HTMLならそのまま、プレーンテキストなら変換
+      const bodyVal = d.body || '';
+      $('f-body').innerHTML = bodyVal.trimStart().startsWith('<')
+        ? bodyVal
+        : plainTextToHtml(bodyVal);
     }
 
     function buildPayload(status) {
@@ -927,7 +1077,7 @@
         title:           $('f-title').value.trim(),
         category:        $('f-category').value,
         language:        $('f-language').value,
-        body:            $('f-body').value,
+        body:            $('f-body').innerHTML,
         author:          $('f-author').value.trim(),
         publishDate:     $('f-publish-date').value,
         performanceDate: $('f-perf-date').value,
@@ -942,10 +1092,10 @@
     // ── validation ─────────────────────────────────────────────────────────
     function validate() {
       const missing = [];
-      if (!$('f-title').value.trim())  missing.push('タイトル');
-      if (!$('f-category').value)      missing.push('カテゴリ');
-      if (!$('f-author').value.trim()) missing.push('執筆者名');
-      if (!$('f-body').value.trim())   missing.push('本文');
+      if (!$('f-title').value.trim())             missing.push('タイトル');
+      if (!$('f-category').value)                  missing.push('カテゴリ');
+      if (!$('f-author').value.trim())             missing.push('執筆者名');
+      if (!($('f-body').innerText || '').trim())   missing.push('本文');
       return missing;
     }
 
@@ -961,6 +1111,7 @@
     function clearEditMode() {
       editingRowIndex = null;
       fillForm({});
+      $('f-body').innerHTML = '';
       $('f-publish-date').value = new Date().toISOString().split('T')[0];
       $('edit-indicator').classList.remove('visible');
       updatePreview();
@@ -1027,6 +1178,105 @@
 
     $('btn-submit').addEventListener('click', () =>
       submitToApi('published', $('btn-submit'), '記事を公開'));
+
+    // ── Rich Text Editor ───────────────────────────────────────────────────
+    let savedRange   = null;
+    let rteModalMode = null;
+
+    function saveSelection() {
+      const sel = window.getSelection();
+      savedRange = (sel && sel.rangeCount > 0) ? sel.getRangeAt(0).cloneRange() : null;
+    }
+
+    function restoreSelection() {
+      if (!savedRange) return;
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(savedRange);
+    }
+
+    function execCmd(cmd, value = null) {
+      $('f-body').focus();
+      document.execCommand(cmd, false, value);
+      updatePreview();
+    }
+
+    // ツールバーのアクティブ状態を更新
+    function updateToolbarState() {
+      try {
+        $('rte-bold').classList.toggle('active',   document.queryCommandState('bold'));
+        $('rte-italic').classList.toggle('active', document.queryCommandState('italic'));
+      } catch(_) {}
+    }
+
+    document.addEventListener('selectionchange', () => {
+      if (document.activeElement === $('f-body') ||
+          $('f-body').contains(document.activeElement)) {
+        updateToolbarState();
+      }
+    });
+
+    $('rte-bold').addEventListener('click', () => execCmd('bold'));
+    $('rte-italic').addEventListener('click', () => execCmd('italic'));
+
+    $('rte-link').addEventListener('mousedown', e => {
+      e.preventDefault(); // フォーカスを外さない
+      saveSelection();
+      openRteModal('link');
+    });
+
+    $('rte-image').addEventListener('mousedown', e => {
+      e.preventDefault();
+      saveSelection();
+      openRteModal('image');
+    });
+
+    // キーボードショートカット
+    $('f-body').addEventListener('keydown', e => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'b') { e.preventDefault(); execCmd('bold'); }
+        if (e.key === 'i') { e.preventDefault(); execCmd('italic'); }
+      }
+    });
+
+    // モーダル
+    function openRteModal(mode) {
+      rteModalMode = mode;
+      $('rte-modal-title').textContent = mode === 'link' ? 'リンクのURLを入力' : '画像のURLを入力';
+      $('rte-modal-input').value = '';
+      $('rte-modal-overlay').classList.add('open');
+      setTimeout(() => $('rte-modal-input').focus(), 60);
+    }
+
+    function closeRteModal() {
+      $('rte-modal-overlay').classList.remove('open');
+    }
+
+    function applyRteModal() {
+      const url  = $('rte-modal-input').value.trim();
+      const mode = rteModalMode;
+      closeRteModal();
+      if (!url) return;
+      restoreSelection();
+      $('f-body').focus();
+      if (mode === 'link') {
+        document.execCommand('createLink', false, url);
+      } else {
+        document.execCommand('insertHTML', false,
+          `<img src="${url.replace(/"/g,'&quot;')}" style="max-width:100%;" />`);
+      }
+      updatePreview();
+    }
+
+    $('rte-modal-ok').addEventListener('click', applyRteModal);
+    $('rte-modal-cancel').addEventListener('click', closeRteModal);
+    $('rte-modal-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); applyRteModal(); }
+      if (e.key === 'Escape') closeRteModal();
+    });
+    $('rte-modal-overlay').addEventListener('click', e => {
+      if (e.target === $('rte-modal-overlay')) closeRteModal();
+    });
 
     // ── Google Drive URL 変換 ─────────────────────────────────────────────
     function driveUrl(url) {
@@ -1131,6 +1381,8 @@
 
     // ── init ───────────────────────────────────────────────────────────────
     $('f-publish-date').value = new Date().toISOString().split('T')[0];
+    // contenteditable の初期状態: <p> で開始させ Enterで段落挿入を統一
+    document.execCommand('defaultParagraphSeparator', false, 'p');
     updatePreview();
 
     // Cloudflare Access からメールアドレスを取得（失敗してもフォールバック）
