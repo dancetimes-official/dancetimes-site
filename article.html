@@ -394,7 +394,7 @@
     const perfTime = a.performanceTime || a['公演時間']   || a.performance_time || '';
     const venue    = a.venue        || a['会場']          || '';
     const body     = a.body         || a['本文']          || '';
-    const photoUrl = driveUrl(a.photoUrl || a.photo_url || a['写真'] || '');
+    const photoUrl = driveUrl(a.photoUrl || a.photo || a.photo_url || a['写真'] || '');
 
     // ── 日付整形 ──
     const pubStr  = formatDate(pubDate);
