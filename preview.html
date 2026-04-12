@@ -624,7 +624,7 @@
     <div class="topbar-right">
       <button class="btn-topbar btn-edit-search" id="btn-open-search">記事を編集</button>
       <button class="btn-topbar btn-draft" id="btn-save-draft">下書き保存</button>
-      <button class="btn-topbar btn-publish" id="btn-submit">公開して投稿</button>
+      <button class="btn-topbar btn-publish" id="btn-submit">記事を公開</button>
     </div>
   </div>
 
@@ -670,7 +670,7 @@
 
         <div class="field-group">
           <label class="field-label" for="f-venue">会場</label>
-          <input class="field-input" id="f-venue" type="text" placeholder="例：東京文化会館" />
+          <input class="field-input" id="f-venue" type="text" placeholder="例：東京文化会館大ホール" />
         </div>
 
         <div class="field-row" style="margin-top:10px;">
@@ -703,7 +703,7 @@
         <div class="field-row">
           <div class="field-group">
             <label class="field-label" for="f-author">執筆者名 <span class="required">*</span></label>
-            <input class="field-input" id="f-author" type="text" placeholder="例：隅田有" />
+            <input class="field-input" id="f-author" type="text" placeholder="例：山野博大" />
           </div>
           <div class="field-group">
             <label class="field-label" for="f-publish-date">公開日 <span class="required">*</span></label>
@@ -720,7 +720,6 @@
           <label class="field-label" for="f-photo-url">写真URL</label>
           <input class="field-input" id="f-photo-url" type="url" placeholder="例：https://example.com/photo.jpg" />
           <div class="field-meta">Google Driveやlivedoorブログにアップロードした画像の公開URLを入力してください</div>
-          <div class="field-meta" style="margin-top:4px; color:#b45309;">※ Google Driveの共有リンクをそのまま貼ると表示されません。画像の直接URLを取得してください</div>
           <div class="field-meta" style="margin-top:4px;">※ 画像は1MB以下を推奨します。Macの場合はプレビューアプリで書き出し時にサイズを調整できます。</div>
         </div>
       </div>
@@ -1027,7 +1026,7 @@
       submitToApi('draft', $('btn-save-draft'), '下書き保存'));
 
     $('btn-submit').addEventListener('click', () =>
-      submitToApi('published', $('btn-submit'), '公開して投稿'));
+      submitToApi('published', $('btn-submit'), '記事を公開'));
 
     // ── Google Drive URL 変換 ─────────────────────────────────────────────
     function driveUrl(url) {
