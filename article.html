@@ -210,12 +210,21 @@
     }
 
     /* hero image */
-    .art-hero-img {
-      width: 100%;
-      max-height: 500px;
-      object-fit: cover;
+    .art-hero-img-wrap {
+      background: #e4f8fb;
       border-radius: var(--radius);
       margin: 24px 0 0;
+      overflow: hidden;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .art-hero-img {
+      width: 100%;
+      max-width: 100%;
+      max-height: 600px;
+      object-fit: contain;
       display: block;
     }
 
@@ -422,7 +431,7 @@
 
         <h1 class="art-title">${esc(title)}</h1>
 
-        ${photoUrl ? `<img class="art-hero-img" src="${esc(photoUrl)}" alt="${esc(title)}" loading="lazy" />` : ''}
+        ${photoUrl ? `<div class="art-hero-img-wrap"><img class="art-hero-img" src="${esc(photoUrl)}" alt="${esc(title)}" loading="lazy" decoding="async" /></div>` : ''}
 
         <div class="art-meta">
           ${renderMetaCell('執筆者', author)}
