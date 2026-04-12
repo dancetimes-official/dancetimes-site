@@ -26,10 +26,10 @@ const CORS_HEADERS = {
 
 const ARTICLES_SHEET = {
   name: "フォームの回答 1",
-  range: "A:L",
+  range: "A:M",
   columns: [
     "タイムスタンプ", "タイトル", "カテゴリ", "言語", "本文",
-    "執筆者名", "公開日", "公演日", "公演時間", "会場", "写真", "公開フラグ",
+    "執筆者名", "公開日", "公演日", "公演時間", "会場", "写真", "公開フラグ", "メールアドレス",
   ],
 };
 
@@ -71,6 +71,7 @@ export default {
           venue           = "",
           photoUrl        = "",
           status          = "draft",
+          email           = "",
         } = body;
 
         // タイムスタンプ（Google Forms 形式: YYYY/MM/DD HH:MM:SS）
@@ -94,7 +95,7 @@ export default {
           venue,
           photoUrl,
           status,
-          "",              // メールアドレス（空白）
+          email,
         ];
 
         const accessToken = await getAccessToken(env);
@@ -129,6 +130,7 @@ export default {
           venue           = "",
           photoUrl        = "",
           status          = "draft",
+          email           = "",
         } = body;
 
         const now = new Date();
@@ -149,7 +151,7 @@ export default {
           venue,
           photoUrl,
           status,
-          "",
+          email,
         ];
 
         const accessToken = await getAccessToken(env);
@@ -172,9 +174,10 @@ export default {
 
       if (pathname === "/articles/search") {
         const url = new URL(request.url);
-        const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+        const q           = (url.searchParams.get("q")           ?? "").trim().toLowerCase();
+        const authorEmail = (url.searchParams.get("authorEmail") ?? "").trim().toLowerCase();
         const rows = await fetchSheetData(accessToken, ARTICLES_SHEET);
-        const results = searchArticleRows(rows, q);
+        const results = searchArticleRows(rows, q, authorEmail);
         return jsonResponse(results);
       }
 
@@ -411,8 +414,9 @@ function parseArchiveRows(rows) {
 // ユーティリティ
 // ───────────────────────────────────────────
 
-/** キーワード検索（タイトル・著者・カテゴリ対象、最大20件、rowIndex付き） */
-function searchArticleRows(rows, q) {
+/** キーワード検索（タイトル・著者・カテゴリ対象、最大20件、rowIndex付き）
+ *  authorEmail が指定された場合はメールアドレス列でさらに絞り込む */
+function searchArticleRows(rows, q, authorEmail = "") {
   if (rows.length < 2) return [];
 
   const colIndex = buildColIndex(rows[0], ARTICLES_SHEET.columns);
@@ -426,6 +430,12 @@ function searchArticleRows(rows, q) {
     const row = rows[i];
     const flag = get(row, "公開フラグ");
     if (flag !== "published" && flag !== "draft") continue;
+
+    // authorEmail フィルタ（指定がある場合のみ）
+    if (authorEmail !== "") {
+      const rowEmail = get(row, "メールアドレス").trim().toLowerCase();
+      if (rowEmail !== authorEmail) continue;
+    }
 
     const title    = get(row, "タイトル");
     const author   = get(row, "執筆者名");

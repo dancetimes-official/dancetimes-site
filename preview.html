@@ -815,6 +815,7 @@
     // ── state ──────────────────────────────────────────────────────────────
     let currentDevice   = 'pc';
     let editingRowIndex = null; // null = 新規, number = 編集中の行番号
+    let userEmail       = '';   // Cloudflare Access から取得したメールアドレス
 
     // ── helpers ────────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
@@ -934,6 +935,7 @@
         performanceTime: $('f-perf-time').value.trim(),
         venue:           $('f-venue').value.trim(),
         photoUrl:        $('f-photo-url').value.trim(),
+        email:           userEmail,
         status,
       };
     }
@@ -1091,7 +1093,9 @@
 
     async function performSearch(q) {
       try {
-        const res = await fetch(`${API_BASE}/articles/search?q=${encodeURIComponent(q)}`);
+        const params = new URLSearchParams({ q });
+        if (userEmail) params.set('authorEmail', userEmail);
+        const res = await fetch(`${API_BASE}/articles/search?${params}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const articles = await res.json();
         renderSearchResults(articles);
@@ -1129,6 +1133,19 @@
     // ── init ───────────────────────────────────────────────────────────────
     $('f-publish-date').value = new Date().toISOString().split('T')[0];
     updatePreview();
+
+    // Cloudflare Access からメールアドレスを取得（失敗してもフォールバック）
+    (async () => {
+      try {
+        const res = await fetch('/cdn-cgi/access/get-identity');
+        if (res.ok) {
+          const identity = await res.json();
+          userEmail = identity.email ?? '';
+        }
+      } catch (_) {
+        // Access 未設定環境では無視
+      }
+    })();
   </script>
 
 </body>
