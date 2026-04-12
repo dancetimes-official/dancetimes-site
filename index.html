@@ -1003,9 +1003,9 @@
   function driveUrl(url) {
     if (!url) return url;
     const m1 = url.match(/drive\.google\.com\/file\/d\/([^/?]+)/);
-    if (m1) return `https://drive.google.com/uc?export=view&id=${m1[1]}`;
+    if (m1) return `https://lh3.googleusercontent.com/d/${m1[1]}`;
     const m2 = url.match(/drive\.google\.com\/open\?id=([^&\s]+)/);
-    if (m2) return `https://drive.google.com/uc?export=view&id=${m2[1]}`;
+    if (m2) return `https://lh3.googleusercontent.com/d/${m2[1]}`;
     return url;
   }
 
