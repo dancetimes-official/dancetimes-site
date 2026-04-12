@@ -97,34 +97,60 @@
     }
     .btn-publish:hover { background: var(--accent-dark); }
 
-    /* topbar status toggle */
-    .topbar-status-toggle {
+    /* ===== DRAFT DROPDOWN ===== */
+    .draft-wrap { position: relative; }
+    .draft-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 300px;
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: var(--radius);
+      z-index: 300;
+      max-height: 340px;
+      overflow-y: auto;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+    }
+    .draft-dropdown.open { display: block; }
+    .draft-item {
       display: flex;
-      background: #2a2a2a;
-      border-radius: 999px;
-      padding: 2px;
-      gap: 1px;
+      align-items: stretch;
+      border-bottom: 1px solid #2a2a2a;
     }
-    .topbar-status-btn {
+    .draft-item:last-child { border-bottom: none; }
+    .draft-item.current { background: #252525; }
+    .draft-item-body {
+      flex: 1; min-width: 0;
+      background: none; border: none;
+      padding: 10px 12px;
+      text-align: left; cursor: pointer;
+      display: flex; flex-direction: column; gap: 3px;
+      transition: background 0.1s;
+    }
+    .draft-item-body:hover { background: #2a2a2a; }
+    .draft-item-title {
+      font-family: var(--font-body);
+      font-size: 0.78rem; color: #ddd;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .draft-item-date {
       font-family: var(--font-mono);
-      font-size: 0.6rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 4px 11px;
-      border-radius: 999px;
-      border: none;
-      background: transparent;
-      color: #666;
-      cursor: pointer;
-      transition: all 0.15s;
+      font-size: 0.58rem; color: #555; letter-spacing: 0.04em;
     }
-    .topbar-status-btn.active-draft {
-      background: rgba(201,169,110,0.22);
-      color: var(--gold);
+    .draft-item-delete {
+      background: none; border: none;
+      color: #444; padding: 0 14px;
+      cursor: pointer; font-size: 1rem;
+      flex-shrink: 0; transition: color 0.15s;
     }
-    .topbar-status-btn.active-publish {
-      background: rgba(110,201,193,0.22);
-      color: var(--accent);
+    .draft-item-delete:hover { color: #e05; }
+    .draft-empty {
+      font-family: var(--font-mono);
+      font-size: 0.65rem; letter-spacing: 0.1em;
+      color: #555; text-align: center;
+      padding: 20px; text-transform: uppercase;
     }
 
     /* ===== LAYOUT ===== */
@@ -508,14 +534,16 @@
     <div class="topbar-left">
       <span class="topbar-logo">The Dance Times</span>
       <span class="topbar-label">投稿プレビュー</span>
+      <div class="draft-wrap">
+        <button class="btn-topbar btn-draft" id="btn-drafts">下書き一覧 ▾</button>
+        <div class="draft-dropdown" id="draft-dropdown">
+          <div class="draft-list" id="draft-list"></div>
+        </div>
+      </div>
     </div>
     <div class="topbar-right">
-      <div class="topbar-status-toggle">
-        <button class="topbar-status-btn active-draft" id="btn-status-draft" onclick="setStatus('draft')">下書き</button>
-        <button class="topbar-status-btn" id="btn-status-publish" onclick="setStatus('published')">公開</button>
-      </div>
       <button class="btn-topbar btn-draft" id="btn-save-draft">下書き保存</button>
-      <button class="btn-topbar btn-publish" id="btn-submit">投稿する</button>
+      <button class="btn-topbar btn-publish" id="btn-submit">公開して投稿</button>
     </div>
   </div>
 
@@ -681,14 +709,24 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
+    const API_BASE   = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
+    const DRAFTS_KEY = 'dancetimes-drafts';
 
     // ── state ──────────────────────────────────────────────────────────────
-    let currentStatus = 'draft';
-    let currentDevice = 'pc';
+    let currentDevice  = 'pc';
+    let currentDraftId = null;  // 現在編集中の下書きID（null=新規）
 
     // ── helpers ────────────────────────────────────────────────────────────
     const $ = id => document.getElementById(id);
+    const pad = n => String(n).padStart(2, '0');
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
 
     function showToast(msg, duration = 2400, isError = false) {
       const t = $('toast');
@@ -701,7 +739,7 @@
     function formatDate(val) {
       if (!val) return '──';
       const d = new Date(val);
-      return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+      return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}`;
     }
 
     function bodyToHtml(text) {
@@ -709,6 +747,16 @@
       return text.split(/\n\n+/)
         .map(p => `<p>${p.replace(/\n/g,'<br>')}</p>`)
         .join('');
+    }
+
+    // ── localStorage helpers ────────────────────────────────────────────────
+    function getDrafts() {
+      try { return JSON.parse(localStorage.getItem(DRAFTS_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveDraftsToStorage(drafts) {
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
     }
 
     // ── update preview ─────────────────────────────────────────────────────
@@ -724,7 +772,6 @@
       const venue       = $('f-venue').value.trim();
       const photoUrl    = $('f-photo-url').value.trim();
 
-      // title
       const titleEl = $('prev-title');
       if (title) {
         titleEl.textContent = title;
@@ -734,30 +781,18 @@
         titleEl.classList.add('art-title-placeholder');
       }
 
-      // category
       $('prev-category').textContent = category || 'カテゴリ';
 
-      // language
       const langEl = $('prev-lang');
       langEl.textContent = language === 'en' ? 'EN' : 'JA';
       langEl.className = 'art-lang' + (language === 'en' ? ' en' : '');
 
-      // body
       $('prev-body').innerHTML = bodyToHtml(body);
-
-      // char count
       $('char-count').textContent = body.length.toLocaleString();
-
-      // author
       $('prev-author').textContent = author ? `執筆者：${author}` : '執筆者：──';
-
-      // publish date
       $('prev-publish-date').textContent = formatDate(publishDate);
-
-      // venue
       $('prev-venue').textContent = venue || '──';
 
-      // perf date+time
       let perfStr = '──';
       if (perfDate) {
         perfStr = formatDate(perfDate);
@@ -765,17 +800,11 @@
       }
       $('prev-perf').textContent = perfStr;
 
-      // status badge
+      // プレビューは常に「公開」バッジで表示
       const badge = $('prev-status-badge');
-      if (currentStatus === 'published') {
-        badge.textContent = '公開';
-        badge.className = 'art-status-badge badge-published';
-      } else {
-        badge.textContent = '下書き';
-        badge.className = 'art-status-badge badge-draft';
-      }
+      badge.textContent = '公開';
+      badge.className = 'art-status-badge badge-published';
 
-      // photo
       const photoEl = $('prev-photo');
       if (photoUrl) {
         photoEl.src = photoUrl;
@@ -786,14 +815,6 @@
       }
     }
 
-    // ── status toggle ──────────────────────────────────────────────────────
-    function setStatus(s) {
-      currentStatus = s;
-      $('btn-status-draft').className   = 'topbar-status-btn' + (s === 'draft'     ? ' active-draft'   : '');
-      $('btn-status-publish').className = 'topbar-status-btn' + (s === 'published' ? ' active-publish' : '');
-      updatePreview();
-    }
-
     // ── device toggle ──────────────────────────────────────────────────────
     function setDevice(d) {
       currentDevice = d;
@@ -802,8 +823,8 @@
       $('preview-wrap').classList.toggle('mobile', d === 'sp');
     }
 
-    // ── draft save (localStorage) ──────────────────────────────────────────
-    function getDraftData() {
+    // ── form data ──────────────────────────────────────────────────────────
+    function getFormData() {
       return {
         title:       $('f-title').value,
         category:    $('f-category').value,
@@ -815,63 +836,126 @@
         perfTime:    $('f-perf-time').value,
         venue:       $('f-venue').value,
         photoUrl:    $('f-photo-url').value,
-        status:      currentStatus,
-        savedAt:     new Date().toISOString(),
       };
     }
 
+    function fillForm(d) {
+      $('f-title').value        = d.title       || '';
+      $('f-category').value     = d.category    || '';
+      $('f-language').value     = d.language    || 'ja';
+      $('f-body').value         = d.body        || '';
+      $('f-author').value       = d.author      || '';
+      $('f-publish-date').value = d.publishDate || '';
+      $('f-perf-date').value    = d.perfDate    || '';
+      $('f-perf-time').value    = d.perfTime    || '';
+      $('f-venue').value        = d.venue       || '';
+      $('f-photo-url').value    = d.photoUrl    || '';
+    }
+
+    // ── draft list ─────────────────────────────────────────────────────────
+    function renderDraftList() {
+      const drafts = getDrafts();
+      const list = $('draft-list');
+
+      if (drafts.length === 0) {
+        list.innerHTML = '<div class="draft-empty">下書きがありません</div>';
+        return;
+      }
+
+      list.innerHTML = drafts.map(d => {
+        const dt = new Date(d.savedAt);
+        const dateStr = `${dt.getFullYear()}/${pad(dt.getMonth()+1)}/${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        const isCurrent = d.id === currentDraftId;
+        return `
+          <div class="draft-item${isCurrent ? ' current' : ''}">
+            <button class="draft-item-body" onclick="loadDraft('${d.id}')">
+              <span class="draft-item-title">${escHtml(d.title || '（タイトルなし）')}</span>
+              <span class="draft-item-date">${dateStr}</span>
+            </button>
+            <button class="draft-item-delete" onclick="deleteDraft('${d.id}', event)" title="削除">×</button>
+          </div>`;
+      }).join('');
+    }
+
+    function openDraftDropdown() {
+      renderDraftList();
+      $('draft-dropdown').classList.add('open');
+    }
+
+    function closeDraftDropdown() {
+      $('draft-dropdown').classList.remove('open');
+    }
+
+    $('btn-drafts').addEventListener('click', e => {
+      e.stopPropagation();
+      $('draft-dropdown').classList.contains('open') ? closeDraftDropdown() : openDraftDropdown();
+    });
+
+    document.addEventListener('click', () => closeDraftDropdown());
+    $('draft-dropdown').addEventListener('click', e => e.stopPropagation());
+
+    // ── save draft ─────────────────────────────────────────────────────────
     $('btn-save-draft').addEventListener('click', () => {
-      localStorage.setItem('dancetimes-draft', JSON.stringify(getDraftData()));
+      const drafts = getDrafts();
+      const data   = getFormData();
+      const now    = new Date().toISOString();
+
+      if (currentDraftId) {
+        const idx = drafts.findIndex(d => d.id === currentDraftId);
+        if (idx >= 0) {
+          drafts[idx] = { ...drafts[idx], ...data, savedAt: now };
+        } else {
+          currentDraftId = generateId();
+          drafts.unshift({ id: currentDraftId, ...data, savedAt: now });
+        }
+      } else {
+        currentDraftId = generateId();
+        drafts.unshift({ id: currentDraftId, ...data, savedAt: now });
+      }
+
+      saveDraftsToStorage(drafts);
       showToast('✓ 下書きを保存しました');
     });
 
-    // restore draft on load
-    const saved = localStorage.getItem('dancetimes-draft');
-    if (saved) {
-      try {
-        const d = JSON.parse(saved);
-        $('f-title').value        = d.title       || '';
-        $('f-category').value     = d.category    || '';
-        $('f-language').value     = d.language    || 'ja';
-        $('f-body').value         = d.body        || '';
-        $('f-author').value       = d.author      || '';
-        $('f-publish-date').value = d.publishDate || '';
-        $('f-perf-date').value    = d.perfDate    || '';
-        $('f-perf-time').value    = d.perfTime    || '';
-        $('f-venue').value        = d.venue       || '';
-        $('f-photo-url').value    = d.photoUrl    || '';
-        if (d.status) setStatus(d.status);
-      } catch(e) {}
+    // ── load draft ─────────────────────────────────────────────────────────
+    function loadDraft(id) {
+      const drafts = getDrafts();
+      const d = drafts.find(d => d.id === id);
+      if (!d) return;
+      currentDraftId = id;
+      fillForm(d);
+      closeDraftDropdown();
+      updatePreview();
+    }
+
+    // ── delete draft ───────────────────────────────────────────────────────
+    function deleteDraft(id, e) {
+      e.stopPropagation();
+      const drafts = getDrafts().filter(d => d.id !== id);
+      saveDraftsToStorage(drafts);
+      if (currentDraftId === id) currentDraftId = null;
+      renderDraftList();
     }
 
     // ── form reset ─────────────────────────────────────────────────────────
     function resetForm() {
-      $('f-title').value        = '';
-      $('f-category').value     = '';
-      $('f-language').value     = 'ja';
-      $('f-body').value         = '';
-      $('f-author').value       = '';
+      currentDraftId = null;
+      fillForm({});
       $('f-publish-date').value = new Date().toISOString().split('T')[0];
-      $('f-perf-date').value    = '';
-      $('f-perf-time').value    = '';
-      $('f-venue').value        = '';
-      $('f-photo-url').value    = '';
-      setStatus('draft');
-      localStorage.removeItem('dancetimes-draft');
       updatePreview();
     }
 
     // ── validation ─────────────────────────────────────────────────────────
     function validate() {
       const missing = [];
-      if (!$('f-title').value.trim())    missing.push('タイトル');
-      if (!$('f-category').value)        missing.push('カテゴリ');
-      if (!$('f-author').value.trim())   missing.push('執筆者名');
-      if (!$('f-body').value.trim())     missing.push('本文');
+      if (!$('f-title').value.trim())  missing.push('タイトル');
+      if (!$('f-category').value)      missing.push('カテゴリ');
+      if (!$('f-author').value.trim()) missing.push('執筆者名');
+      if (!$('f-body').value.trim())   missing.push('本文');
       return missing;
     }
 
-    // ── submit to API ──────────────────────────────────────────────────────
+    // ── submit to API (always published) ───────────────────────────────────
     $('btn-submit').addEventListener('click', async () => {
       const missing = validate();
       if (missing.length > 0) {
@@ -898,7 +982,7 @@
             performanceTime: $('f-perf-time').value.trim(),
             venue:           $('f-venue').value.trim(),
             photoUrl:        $('f-photo-url').value.trim(),
-            status:          currentStatus,
+            status:          'published',
           }),
         });
 
@@ -913,7 +997,7 @@
         console.error(err);
         showToast('投稿に失敗しました。もう一度お試しください。', 3500, true);
       } finally {
-        btn.textContent = '投稿する';
+        btn.textContent = '公開して投稿';
         btn.disabled = false;
       }
     });
