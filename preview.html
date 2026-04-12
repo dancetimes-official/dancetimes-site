@@ -983,12 +983,14 @@
       try {
         let res;
         if (editingRowIndex !== null) {
+          // 2回目以降は常にPUT
           res = await fetch(`${API_BASE}/articles/${editingRowIndex}`, {
             method:  'PUT',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(payload),
           });
         } else {
+          // 初回のみPOST
           res = await fetch(`${API_BASE}/articles`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1000,9 +1002,15 @@
         const data = await res.json();
         if (!data.success) throw new Error('API returned failure');
 
-        const isNew = editingRowIndex === null;
-        showToast(status === 'draft' ? '✓ 下書きを保存しました' : (isNew ? '✓ 投稿しました！' : '✓ 保存しました！'));
-        if (isNew && status === 'published') clearEditMode();
+        // 初回POSTの場合、返ってきたrowIndexを記憶して以降はPUTで上書き
+        if (editingRowIndex === null && data.rowIndex) {
+          editingRowIndex = data.rowIndex;
+          const title = $('f-title').value.trim();
+          $('edit-indicator-label').textContent = `編集中：${title || '（タイトルなし）'}`;
+          $('edit-indicator').classList.add('visible');
+        }
+
+        showToast(status === 'draft' ? '✓ 下書きを保存しました' : '✓ 投稿しました！');
 
       } catch (err) {
         console.error(err);

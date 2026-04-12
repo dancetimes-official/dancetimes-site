@@ -98,8 +98,12 @@ export default {
         ];
 
         const accessToken = await getAccessToken(env);
-        await appendSheetRow(accessToken, ARTICLES_SHEET.name, row);
-        return jsonResponse({ success: true });
+        const appendResult = await appendSheetRow(accessToken, ARTICLES_SHEET.name, row);
+        // updatedRange 例: "フォームの回答 1!A5:M5" → 行番号を抽出
+        const updatedRange = appendResult?.updates?.updatedRange ?? "";
+        const rowMatch = updatedRange.match(/!A(\d+)/);
+        const rowIndex = rowMatch ? parseInt(rowMatch[1], 10) : null;
+        return jsonResponse({ success: true, rowIndex });
 
       } catch (err) {
         console.error(err);
@@ -420,7 +424,8 @@ function searchArticleRows(rows, q) {
   const results = [];
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
-    if (get(row, "公開フラグ") !== "published") continue;
+    const flag = get(row, "公開フラグ");
+    if (flag !== "published" && flag !== "draft") continue;
 
     const title    = get(row, "タイトル");
     const author   = get(row, "執筆者名");
