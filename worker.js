@@ -16,7 +16,7 @@ const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -107,6 +107,57 @@ export default {
       }
     }
 
+    // ── PUT /articles/:rowIndex ───────────────────────────────────────────────
+    const putMatch = pathname.match(/^\/articles\/(\d+)$/);
+    if (request.method === "PUT" && putMatch) {
+      try {
+        const rowIndex = parseInt(putMatch[1], 10);
+        const body = await request.json();
+        const {
+          title           = "",
+          category        = "",
+          language        = "",
+          body: articleBody = "",
+          author          = "",
+          publishDate     = "",
+          performanceDate = "",
+          performanceTime = "",
+          venue           = "",
+          photoUrl        = "",
+          status          = "draft",
+        } = body;
+
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, "0");
+        const timestamp = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ` +
+                          `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+        const row = [
+          timestamp,
+          title,
+          category,
+          language,
+          articleBody,
+          author,
+          publishDate,
+          performanceDate,
+          performanceTime,
+          venue,
+          photoUrl,
+          status,
+          "",
+        ];
+
+        const accessToken = await getAccessToken(env);
+        await updateSheetRow(accessToken, ARTICLES_SHEET.name, rowIndex, row);
+        return jsonResponse({ success: true });
+
+      } catch (err) {
+        console.error(err);
+        return jsonResponse({ error: err.message }, 500);
+      }
+    }
+
     // ── GET only below ────────────────────────────────────────────────────────
     if (request.method !== "GET") {
       return jsonResponse({ error: "Method not allowed" }, 405);
@@ -114,6 +165,14 @@ export default {
 
     try {
       const accessToken = await getAccessToken(env);
+
+      if (pathname === "/articles/search") {
+        const url = new URL(request.url);
+        const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+        const rows = await fetchSheetData(accessToken, ARTICLES_SHEET);
+        const results = searchArticleRows(rows, q);
+        return jsonResponse(results);
+      }
 
       if (pathname === "/archive") {
         const rows = await fetchSheetData(accessToken, ARCHIVE_SHEET);
@@ -347,6 +406,76 @@ function parseArchiveRows(rows) {
 // ───────────────────────────────────────────
 // ユーティリティ
 // ───────────────────────────────────────────
+
+/** キーワード検索（タイトル・著者・カテゴリ対象、最大20件、rowIndex付き） */
+function searchArticleRows(rows, q) {
+  if (rows.length < 2) return [];
+
+  const colIndex = buildColIndex(rows[0], ARTICLES_SHEET.columns);
+  const get = (row, col) => {
+    const idx = colIndex[col];
+    return idx >= 0 ? (row[idx] ?? "") : "";
+  };
+
+  const results = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (get(row, "公開フラグ") !== "published") continue;
+
+    const title    = get(row, "タイトル");
+    const author   = get(row, "執筆者名");
+    const category = get(row, "カテゴリ");
+
+    if (
+      q === "" ||
+      title.toLowerCase().includes(q) ||
+      author.toLowerCase().includes(q) ||
+      category.toLowerCase().includes(q)
+    ) {
+      results.push({
+        rowIndex:        i + 1, // 1-based: header=1, first data row=2
+        timestamp:       get(row, "タイムスタンプ"),
+        title,
+        category,
+        language:        get(row, "言語"),
+        body:            get(row, "本文"),
+        author,
+        publishDate:     get(row, "公開日"),
+        performanceDate: get(row, "公演日"),
+        performanceTime: get(row, "公演時間"),
+        venue:           get(row, "会場"),
+        photo:           get(row, "写真"),
+        publishFlag:     get(row, "公開フラグ"),
+      });
+    }
+
+    if (results.length >= 20) break;
+  }
+  return results;
+}
+
+async function updateSheetRow(accessToken, sheetName, rowIndex, row) {
+  // rowIndex は1始まり（Sheets API の行番号と同じ）
+  const range = encodeURIComponent(`${sheetName}!A${rowIndex}`);
+  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}` +
+                `?valueInputOption=USER_ENTERED`;
+
+  const res = await fetch(url, {
+    method:  "PUT",
+    headers: {
+      Authorization:  `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ values: [row] }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Sheets update error (${sheetName} row ${rowIndex}): ${res.status} ${body}`);
+  }
+
+  return res.json();
+}
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
