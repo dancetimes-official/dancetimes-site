@@ -46,11 +46,10 @@ const ARCHIVE_SHEET = {
 
 const PERFORMANCES_SHEET = {
   name: "Performances",
-  range: "A:N",
+  range: "A:M",
   columns: [
-    "title", "company", "venue", "date_start", "date_end",
-    "price", "ticket_on_sale", "official_url", "notes", "published", "source_url", "created_at",
-    "performance_times", "cast",
+    "title", "company", "venue", "date", "time",
+    "price", "cast", "ticket_on_sale", "official_url", "notes", "published", "source_url", "created_at",
   ],
 };
 
@@ -281,9 +280,10 @@ export default {
           title          = "",
           company        = "",
           venue          = "",
-          date_start     = "",
-          date_end       = "",
+          date           = "",
+          time           = "",
           price          = "",
+          cast           = "",
           ticket_on_sale = "",
           official_url   = "",
           notes          = "",
@@ -293,7 +293,7 @@ export default {
         const now = new Date();
         const pad = (n) => String(n).padStart(2, "0");
         const created_at = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-        const row = [title, company, venue, date_start, date_end, price, ticket_on_sale, official_url, notes, published, source_url, created_at];
+        const row = [title, company, venue, date, time, price, cast, ticket_on_sale, official_url, notes, published, source_url, created_at];
         const accessToken  = await getAccessToken(env);
         const appendResult = await appendPerformanceSheetRow(accessToken, PERFORMANCES_SHEET.name, row);
         const updatedRange = appendResult?.updates?.updatedRange ?? "";
@@ -315,9 +315,10 @@ export default {
           title          = "",
           company        = "",
           venue          = "",
-          date_start     = "",
-          date_end       = "",
+          date           = "",
+          time           = "",
           price          = "",
+          cast           = "",
           ticket_on_sale = "",
           official_url   = "",
           notes          = "",
@@ -325,7 +326,7 @@ export default {
           source_url     = "",
           created_at     = "",
         } = body;
-        const row         = [title, company, venue, date_start, date_end, price, ticket_on_sale, official_url, notes, published, source_url, created_at];
+        const row         = [title, company, venue, date, time, price, cast, ticket_on_sale, official_url, notes, published, source_url, created_at];
         const accessToken = await getAccessToken(env);
         await updatePerformanceSheetRow(accessToken, PERFORMANCES_SHEET.name, rowIndex, row);
         return jsonResponse({ success: true });
@@ -388,19 +389,9 @@ export default {
         const rows  = await fetchPerformanceSheetData(accessToken, PERFORMANCES_SHEET);
         const perfs = parsePerformanceRows(rows);
         const months = [...new Set(
-          perfs.flatMap(p => {
-            if (!p.date_start) return [];
-            const pEnd = p.date_end && p.date_end >= p.date_start ? p.date_end : p.date_start;
-            const result = [];
-            const start  = new Date(p.date_start + "T00:00:00");
-            const end    = new Date(pEnd          + "T00:00:00");
-            let   cur    = new Date(start.getFullYear(), start.getMonth(), 1);
-            while (cur <= end) {
-              result.push(`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,"0")}`);
-              cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
-            }
-            return result;
-          })
+          perfs
+            .map(p => p.date ? p.date.slice(0, 7) : null)
+            .filter(Boolean)
         )].sort();
         return jsonResponse(months);
       }
@@ -413,26 +404,14 @@ export default {
         let   perfs      = parsePerformanceRows(rows, { print: printParam });
 
         if (monthParam) {
-          const [y, mo]  = monthParam.split("-").map(Number);
-          const monthStart = `${monthParam}-01`;
-          const lastDay    = new Date(y, mo, 0).getDate();
-          const monthEnd   = `${monthParam}-${String(lastDay).padStart(2, "0")}`;
-          perfs = perfs.filter(p => {
-            const pStart = p.date_start || "";
-            const pEnd   = p.date_end   || pStart;
-            return pStart <= monthEnd && pEnd >= monthStart;
-          });
+          perfs = perfs.filter(p => p.date && p.date.slice(0, 7) === monthParam);
         } else {
           const now    = new Date();
           const pad2   = (n) => String(n).padStart(2, "0");
           const today  = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
           const endD   = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
           const endStr = `${endD.getFullYear()}-${pad2(endD.getMonth()+1)}-${pad2(endD.getDate())}`;
-          perfs = perfs.filter(p => {
-            const pStart = p.date_start || "";
-            const pEnd   = p.date_end   || pStart;
-            return pEnd >= today && pStart <= endStr;
-          });
+          perfs = perfs.filter(p => p.date && p.date >= today && p.date <= endStr);
         }
 
         return jsonResponse(perfs);
@@ -811,15 +790,14 @@ function parsePerformanceRows(rows, options = {}) {
     if (!includeAll && published !== "published") continue;
 
     const obj = {
-      title:             get(row, "title"),
-      company:           get(row, "company"),
-      venue:             get(row, "venue"),
-      date_start:        get(row, "date_start"),
-      date_end:          get(row, "date_end"),
-      price:             get(row, "price"),
-      notes:             get(row, "notes"),
-      performance_times: get(row, "performance_times"),
-      cast:              get(row, "cast"),
+      title:   get(row, "title"),
+      company: get(row, "company"),
+      venue:   get(row, "venue"),
+      date:    get(row, "date"),
+      time:    get(row, "time"),
+      price:   get(row, "price"),
+      cast:    get(row, "cast"),
+      notes:   get(row, "notes"),
       published,
     };
 

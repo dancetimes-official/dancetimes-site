@@ -632,30 +632,29 @@
   function renderSchedule() {
     const container = document.getElementById('schedule-container');
     const currentYM = availableMonths[currentMonthIdx];
-    const days      = daysInMonth(currentYM);
 
-    // 各日付に公演を振り分け（date_start〜date_end にまたがる公演を各日に表示）
+    // date 列で直接グループ化（同日複数公演に対応）
     const dayMap = new Map();
-    for (const day of days) {
-      const perfs = performances.filter(p => {
-        const s = p.date_start || '';
-        const e = p.date_end   || s;
-        return s <= day && e >= day;
-      });
-      if (perfs.length > 0) dayMap.set(day, perfs);
+    for (const p of performances) {
+      if (!p.date || p.date.slice(0, 7) !== currentYM) continue;
+      if (!dayMap.has(p.date)) dayMap.set(p.date, []);
+      dayMap.get(p.date).push(p);
     }
 
-    if (dayMap.size === 0) {
+    const sortedDays = [...dayMap.keys()].sort();
+
+    if (sortedDays.length === 0) {
       container.innerHTML = `<div class="state-box"><div class="api-empty">この月の公演情報はまだ登録されていません。</div></div>`;
       return;
     }
 
     let html = '';
-    for (const [day, perfs] of dayMap) {
-      const dayNum    = new Date(day + 'T00:00:00').getDate();
-      const wdClass   = weekdayClass(day);
-      const wdLabel   = weekdayLabel(day);
-      const groupCls  = wdClass ? ` date-group--${wdClass}` : '';
+    for (const day of sortedDays) {
+      const perfs    = dayMap.get(day);
+      const dayNum   = new Date(day + 'T00:00:00').getDate();
+      const wdClass  = weekdayClass(day);
+      const wdLabel  = weekdayLabel(day);
+      const groupCls = wdClass ? ` date-group--${wdClass}` : '';
 
       html += `<div class="date-group${groupCls}">`;
       html += `<div class="date-group-head">
@@ -665,11 +664,9 @@
       html += `<ul class="perf-list">`;
 
       for (const p of perfs) {
-        // サブメタ（会社名・会場・料金）
         const subParts = [
           p.company ? `<span class="perf-company">${esc(p.company)}</span>` : '',
           p.venue   ? `<span class="perf-venue">${esc(p.venue)}</span>`     : '',
-          p.price   ? `<span class="perf-price">${esc(p.price)}</span>`     : '',
         ].filter(Boolean);
         const subMeta = subParts.length
           ? `<div class="perf-submeta">${subParts.join('')}</div>`
@@ -677,7 +674,7 @@
 
         html += `<li class="perf-item">
           <div class="perf-main">
-            <div class="perf-time">${esc(p.performance_times || '')}</div>
+            <div class="perf-time">${esc(p.time || '')}</div>
             <div class="perf-title">${esc(p.title)}</div>
             <div class="perf-venue-print">${esc(p.venue || '')}</div>
             <div class="perf-cast">${esc(p.cast || '')}</div>
