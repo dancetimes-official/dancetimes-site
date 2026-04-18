@@ -46,10 +46,11 @@ const ARCHIVE_SHEET = {
 
 const PERFORMANCES_SHEET = {
   name: "Performances",
-  range: "A:M",
+  range: "A:P",
   columns: [
     "title", "company", "venue", "date", "time",
     "price", "cast", "ticket_on_sale", "official_url", "notes", "published", "source_url", "created_at",
+    "cast_etc", "choreographer", "restaging",
   ],
 };
 
@@ -790,14 +791,17 @@ function parsePerformanceRows(rows, options = {}) {
     if (!includeAll && published !== "published") continue;
 
     const obj = {
-      title:   get(row, "title"),
-      company: get(row, "company"),
-      venue:   get(row, "venue"),
-      date:    get(row, "date"),
-      time:    get(row, "time"),
-      price:   get(row, "price"),
-      cast:    get(row, "cast"),
-      notes:   get(row, "notes"),
+      title:        get(row, "title"),
+      company:      get(row, "company"),
+      venue:        get(row, "venue"),
+      date:         get(row, "date"),
+      time:         get(row, "time"),
+      price:        get(row, "price"),
+      cast:         get(row, "cast"),
+      cast_etc:     get(row, "cast_etc"),
+      choreographer:get(row, "choreographer"),
+      restaging:    get(row, "restaging"),
+      notes:        get(row, "notes"),
       published,
     };
 

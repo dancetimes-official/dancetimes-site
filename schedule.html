@@ -664,6 +664,17 @@
       html += `<ul class="perf-list">`;
 
       for (const p of perfs) {
+        // キャスト・スタッフ情報
+        const staffParts = [];
+        if (p.cast) {
+          const hasEtc = (p.cast_etc || '').toString().toUpperCase() === 'TRUE';
+          staffParts.push(`出＝${esc(p.cast)}${hasEtc ? ' 他' : ''}`);
+        }
+        if (p.choreographer) staffParts.push(`振＝${esc(p.choreographer)}`);
+        if (p.restaging)     staffParts.push(`改訂＝${esc(p.restaging)}`);
+        const staffHtml = staffParts.join('　');
+
+        // サブメタ（カンパニー・会場）
         const subParts = [
           p.company ? `<span class="perf-company">${esc(p.company)}</span>` : '',
           p.venue   ? `<span class="perf-venue">${esc(p.venue)}</span>`     : '',
@@ -677,7 +688,7 @@
             <div class="perf-time">${esc(p.time || '')}</div>
             <div class="perf-title">${esc(p.title)}</div>
             <div class="perf-venue-print">${esc(p.venue || '')}</div>
-            <div class="perf-cast">${esc(p.cast || '')}</div>
+            <div class="perf-cast">${staffHtml}</div>
           </div>
           ${subMeta}
         </li>`;
