@@ -206,10 +206,9 @@
     .date-group--hol .date-day,
     .date-group--hol .date-weekday { color: var(--sun); }
 
+    /* ===== PERFORMANCE ITEM ===== */
     .perf-list { list-style: none; }
     .perf-item {
-      display: flex; align-items: baseline;
-      gap: 16px; flex-wrap: wrap;
       padding: 10px 8px;
       border-bottom: 1px dotted var(--border);
       border-radius: var(--radius);
@@ -217,59 +216,46 @@
     }
     .perf-item:last-child { border-bottom: none; }
     .perf-item:hover { background: var(--accent-soft); }
+
+    /* 画面表示：縦積みレイアウト */
+    .perf-main { display: flex; flex-direction: column; }
+    .perf-time   { order: 2; }
+    .perf-title  { order: 1; }
+    .perf-venue-print { display: none; } /* 印刷専用列・画面では非表示 */
+    .perf-cast   { order: 3; }
+
     .perf-title {
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 500;
       color: var(--text);
-      flex: 1;
-      min-width: 180px;
+      line-height: 1.45;
     }
-    .perf-company {
+    .perf-time {
       font-family: var(--font-mono);
-      font-size: 0.62rem;
-      color: var(--text-sub);
-      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+      color: var(--accent-dark);
+      letter-spacing: 0.06em;
+      margin-top: 2px;
     }
-    .perf-venue {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
+    .perf-time:empty { display: none; }
+    .perf-cast {
+      font-size: 0.8rem;
       color: var(--text-sub);
-      letter-spacing: 0.04em;
+      margin-top: 2px;
     }
+    .perf-cast:empty { display: none; }
+
+    .perf-submeta {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-top: 5px;
+    }
+    .perf-company,
+    .perf-venue,
     .perf-price {
       font-family: var(--font-mono);
-      font-size: 0.63rem;
-      color: var(--text-sub);
-      white-space: nowrap;
-    }
-    .perf-official {
-      font-family: var(--font-mono);
-      font-size: 0.63rem;
-      color: var(--accent-dark);
-      letter-spacing: 0.04em;
-    }
-    .perf-official a {
-      color: var(--accent-dark);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-    .perf-onsale {
-      font-family: var(--font-mono);
       font-size: 0.62rem;
       color: var(--text-sub);
-    }
-
-    /* ===== PREMIUM PLACEHOLDER ===== */
-    .premium-notice {
-      margin: 8px 8px 4px;
-      padding: 8px 14px;
-      background: rgba(201,169,110,0.08);
-      border: 1px dashed rgba(201,169,110,0.4);
-      border-radius: var(--radius);
-      font-family: var(--font-mono);
-      font-size: 0.62rem;
       letter-spacing: 0.04em;
-      color: var(--gold);
     }
 
     /* ===== LOADING / ERROR / EMPTY ===== */
@@ -328,34 +314,163 @@
     }
     .footer-links a:hover { color: var(--accent-dark); }
 
-    /* ===== PRINT HEADER (non-print hidden) ===== */
+    /* ===== 印刷専用要素（画面では非表示）===== */
     .print-only { display: none; }
+    .print-footer-text { display: none; }
 
     /* ===== PRINT STYLES ===== */
     @media print {
-      .no-print { display: none !important; }
+      /* --- 表示切り替え --- */
+      .no-print  { display: none !important; }
       .print-only { display: block !important; }
-      header.site-header { position: static; }
+
+      /* --- ページ設定 --- */
+      @page {
+        size: A4 portrait;
+        margin: 15mm 12mm;
+      }
+
+      body {
+        font-size: 10pt;
+        color: #000;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      /* --- ヘッダー・ナビ非表示 --- */
+      header.site-header { position: static; border: none; background: transparent; }
       nav.site-nav { display: none; }
-      .month-nav-bar .print-btn { display: none; }
-      .month-nav-btn { display: none; }
-      body { font-size: 11pt; color: #000; background: #fff; }
-      .page-title-bar { border: none; padding-bottom: 4pt; }
-      .date-group-head { border-bottom: 1pt solid #000; }
-      .date-day { font-size: 13pt; }
-      .date-weekday { font-size: 9pt; }
-      .perf-item { page-break-inside: avoid; }
+      .page-title-bar { display: none; }
+      .month-nav-bar  { display: none; }
       footer .footer-copy,
       footer .footer-links { display: none; }
+
+      /* --- 印刷用ページヘッダー --- */
+      .print-page-header {
+        text-align: center;
+        margin-bottom: 10pt;
+      }
+      .print-page-title {
+        font-family: 'Noto Serif JP', serif;
+        font-size: 16pt;
+        font-weight: 400;
+        letter-spacing: 0.12em;
+        color: #000;
+        display: block;
+        margin-bottom: 4pt;
+      }
+      .print-page-rule {
+        border: none;
+        border-top: 0.75pt solid #000;
+        margin: 0;
+      }
+
+      /* --- 日付グループ --- */
+      .schedule-list { display: block; }
+      .date-group { margin-bottom: 6pt; page-break-inside: avoid; }
+      .date-group-head {
+        display: flex; align-items: baseline; gap: 5pt;
+        padding: 3pt 0 2pt;
+        border-top: none;
+        border-bottom: 0.5pt solid #000;
+        margin-bottom: 0;
+      }
+      .date-day {
+        font-family: 'Noto Serif JP', serif;
+        font-size: 12pt;
+        font-weight: 400;
+        min-width: auto;
+        line-height: 1.2;
+      }
+      .date-weekday {
+        font-family: 'DM Mono', monospace;
+        font-size: 9pt;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      /* 曜日色はそのまま継承（--sat / --sun は印刷でも有効） */
+      .date-group--sat .date-day,
+      .date-group--sat .date-weekday { color: #1a56a0; }
+      .date-group--sun .date-day,
+      .date-group--sun .date-weekday,
+      .date-group--hol .date-day,
+      .date-group--hol .date-weekday  { color: #a02020; }
+
+      /* --- 公演行：時間 | 公演名 | 会場 グリッド --- */
+      .perf-list  { list-style: none; }
+      .perf-item  {
+        display: block;
+        padding: 2pt 0;
+        border-bottom: 0.3pt solid #ddd;
+        page-break-inside: avoid;
+        background: transparent !important;
+      }
+      .perf-item:last-child { border-bottom: none; }
+
+      .perf-main {
+        display: grid;
+        grid-template-columns: 52pt 1fr 130pt;
+        column-gap: 5pt;
+        align-items: baseline;
+        flex-direction: unset;
+      }
+
+      /* グリッド配置を上書き */
+      .perf-time {
+        grid-area: 1 / 1;
+        order: unset;
+        font-family: 'DM Mono', monospace;
+        font-size: 9pt;
+        color: #333;
+        letter-spacing: 0;
+        margin-top: 0;
+      }
+      .perf-time:empty { visibility: hidden; display: block; }
+
+      .perf-title {
+        grid-area: 1 / 2;
+        order: unset;
+        font-size: 10pt;
+        font-weight: bold;
+        color: #000;
+        line-height: 1.3;
+      }
+
+      .perf-venue-print {
+        grid-area: 1 / 3;
+        display: block;
+        order: unset;
+        text-align: right;
+        font-family: 'DM Mono', monospace;
+        font-size: 8.5pt;
+        color: #333;
+      }
+
+      .perf-cast {
+        grid-area: 2 / 2 / 2 / 4;
+        order: unset;
+        font-size: 8pt;
+        color: #555;
+        font-style: italic;
+        margin-top: 0;
+        line-height: 1.3;
+      }
+      .perf-cast:empty { display: none; }
+
+      /* サブメタ（会社名・会場・料金）は印刷では非表示 */
+      .perf-submeta { display: none; }
+
+      /* --- フッター --- */
       .print-footer-text {
         display: block;
         font-size: 8pt;
-        color: #555;
+        color: #666;
         text-align: center;
-        padding-top: 8pt;
+        margin-top: 10pt;
+        padding-top: 4pt;
         border-top: 0.5pt solid #ccc;
       }
-      @page { size: A4 portrait; margin: 18mm 15mm; }
     }
 
     /* ===== RESPONSIVE ===== */
@@ -363,7 +478,6 @@
       .wrap { padding: 0 16px; }
       .header-inner { gap: 12px; }
       nav.site-nav { gap: 14px; }
-      .perf-item { gap: 8px; }
       .month-nav-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
     }
   </style>
@@ -390,12 +504,17 @@
   </header>
 
   <main>
-    <!-- ===== PAGE TITLE ===== -->
-    <div class="page-title-bar">
+    <!-- ===== 印刷用ページヘッダー（画面では非表示）===== -->
+    <div class="print-only print-page-header">
+      <span class="print-page-title" id="print-page-title"></span>
+      <hr class="print-page-rule" />
+    </div>
+
+    <!-- ===== PAGE TITLE（画面のみ）===== -->
+    <div class="page-title-bar no-print">
       <div class="wrap">
-        <div class="print-only" id="print-header-title" style="margin-bottom:8px;font-family:var(--font-display);font-size:1.3rem;font-weight:400;letter-spacing:0.06em;"></div>
-        <div class="page-eyebrow no-print">Performance Schedule</div>
-        <h1 class="page-h1 no-print">公演スケジュール</h1>
+        <div class="page-eyebrow">Performance Schedule</div>
+        <h1 class="page-h1">公演スケジュール</h1>
       </div>
     </div>
 
@@ -437,7 +556,7 @@
           <a href="/#all-articles">全記事一覧</a>
           <a href="/schedule.html">Schedule</a>
         </nav>
-        <div class="print-footer-text">© The Dance Times | dance-times.com</div>
+        <div class="print-footer-text">© The Dance Times</div>
       </div>
     </div>
   </footer>
@@ -448,7 +567,8 @@
   const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
 
   // ── 祝日リスト（簡易版、必要に応じて拡張） ──────────────────────────────
-  const HOLIDAYS_2026 = new Set([
+  const HOLIDAYS = new Set([
+    // 2026
     "2026-01-01","2026-01-12","2026-02-11","2026-02-23","2026-03-20",
     "2026-04-29","2026-05-03","2026-05-04","2026-05-05","2026-05-06",
     "2026-07-20","2026-08-11","2026-09-21","2026-09-22","2026-09-23",
@@ -460,7 +580,7 @@
     "2025-11-03","2025-11-24",
   ]);
 
-  function isHoliday(dateStr) { return HOLIDAYS_2026.has(dateStr); }
+  function isHoliday(d) { return HOLIDAYS.has(d); }
 
   // ── 状態 ──────────────────────────────────────────────────────────────────
   let availableMonths = [];
@@ -480,48 +600,47 @@
     return `${y}年${parseInt(m)}月`;
   }
 
-  function dateStr(yyyy, mm, dd) {
+  function mkDate(yyyy, mm, dd) {
     return `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
   }
 
-  // 指定月の全日付リストを返す（YYYY-MM-DD）
   function daysInMonth(ym) {
     const [y, m] = ym.split('-').map(Number);
     const count  = new Date(y, m, 0).getDate();
     const days   = [];
-    for (let d = 1; d <= count; d++) days.push(dateStr(y, m, d));
+    for (let d = 1; d <= count; d++) days.push(mkDate(y, m, d));
     return days;
   }
 
-  function weekdayClass(dateString) {
-    const d = new Date(dateString + 'T00:00:00');
-    if (isHoliday(dateString)) return 'hol';
-    if (d.getDay() === 0) return 'sun';
-    if (d.getDay() === 6) return 'sat';
+  function weekdayClass(ds) {
+    if (isHoliday(ds)) return 'hol';
+    const day = new Date(ds + 'T00:00:00').getDay();
+    if (day === 0) return 'sun';
+    if (day === 6) return 'sat';
     return '';
   }
 
-  const WEEKDAYS_JA = ['日','月','火','水','木','金','土'];
-  function weekdayLabel(dateString) {
-    const d = new Date(dateString + 'T00:00:00');
-    let label = WEEKDAYS_JA[d.getDay()];
-    if (isHoliday(dateString)) label += '・祝';
+  const WD_JA = ['日','月','火','水','木','金','土'];
+  function weekdayLabel(ds) {
+    const d   = new Date(ds + 'T00:00:00');
+    let label = WD_JA[d.getDay()];
+    if (isHoliday(ds)) label += '・祝';
     return label;
   }
 
   // ── 公演リスト描画 ────────────────────────────────────────────────────────
   function renderSchedule() {
-    const container  = document.getElementById('schedule-container');
-    const currentYM  = availableMonths[currentMonthIdx];
-    const days       = daysInMonth(currentYM);
+    const container = document.getElementById('schedule-container');
+    const currentYM = availableMonths[currentMonthIdx];
+    const days      = daysInMonth(currentYM);
 
-    // 各日付にまたがる公演を展開
-    const dayMap = new Map(); // dateStr -> performance[]
+    // 各日付に公演を振り分け（date_start〜date_end にまたがる公演を各日に表示）
+    const dayMap = new Map();
     for (const day of days) {
       const perfs = performances.filter(p => {
-        const start = p.date_start || '';
-        const end   = p.date_end   || start;
-        return start <= day && end >= day;
+        const s = p.date_start || '';
+        const e = p.date_end   || s;
+        return s <= day && e >= day;
       });
       if (perfs.length > 0) dayMap.set(day, perfs);
     }
@@ -533,52 +652,41 @@
 
     let html = '';
     for (const [day, perfs] of dayMap) {
-      const d       = new Date(day + 'T00:00:00');
-      const dayNum  = d.getDate();
-      const wdClass = weekdayClass(day);
-      const wdLabel = weekdayLabel(day);
-      const groupClass = wdClass ? ` date-group--${wdClass}` : '';
+      const dayNum    = new Date(day + 'T00:00:00').getDate();
+      const wdClass   = weekdayClass(day);
+      const wdLabel   = weekdayLabel(day);
+      const groupCls  = wdClass ? ` date-group--${wdClass}` : '';
 
-      html += `<div class="date-group${groupClass}">`;
+      html += `<div class="date-group${groupCls}">`;
       html += `<div class="date-group-head">
         <span class="date-day">${dayNum}</span>
-        <span class="date-weekday">${wdLabel}</span>
+        <span class="date-weekday">（${wdLabel}）</span>
       </div>`;
       html += `<ul class="perf-list">`;
 
       for (const p of perfs) {
+        // サブメタ（会社名・会場・料金）
+        const subParts = [
+          p.company ? `<span class="perf-company">${esc(p.company)}</span>` : '',
+          p.venue   ? `<span class="perf-venue">${esc(p.venue)}</span>`     : '',
+          p.price   ? `<span class="perf-price">${esc(p.price)}</span>`     : '',
+        ].filter(Boolean);
+        const subMeta = subParts.length
+          ? `<div class="perf-submeta">${subParts.join('')}</div>`
+          : '';
+
         html += `<li class="perf-item">
-          <span class="perf-title">${esc(p.title)}</span>`;
-
-        if (p.company) {
-          html += `<span class="perf-company">${esc(p.company)}</span>`;
-        }
-        if (p.venue) {
-          html += `<span class="perf-venue">${esc(p.venue)}</span>`;
-        }
-        if (p.price) {
-          html += `<span class="perf-price">${esc(p.price)}</span>`;
-        }
-
-        if (!isPrint) {
-          if (p.ticket_on_sale) {
-            html += `<span class="perf-onsale">発売: ${esc(p.ticket_on_sale)}</span>`;
-          }
-          if (p.official_url) {
-            html += `<span class="perf-official"><a href="${esc(p.official_url)}" target="_blank" rel="noopener">公式サイト ↗</a></span>`;
-          }
-        }
-
-        html += `</li>`;
+          <div class="perf-main">
+            <div class="perf-time">${esc(p.performance_times || '')}</div>
+            <div class="perf-title">${esc(p.title)}</div>
+            <div class="perf-venue-print">${esc(p.venue || '')}</div>
+            <div class="perf-cast">${esc(p.cast || '')}</div>
+          </div>
+          ${subMeta}
+        </li>`;
       }
 
-      html += `</ul>`;
-
-      if (!isPrint) {
-        html += `<div class="premium-notice no-print">🔒 チケット発売日・公式サイトはプレミアム会員向けに準備中です</div>`;
-      }
-
-      html += `</div>`;
+      html += `</ul></div>`;
     }
 
     container.innerHTML = html;
@@ -590,9 +698,9 @@
     const label = document.getElementById('month-label');
     if (label) label.textContent = formatYM(ym);
 
-    // 印刷用ヘッダー
-    const printTitle = document.getElementById('print-header-title');
-    if (printTitle) printTitle.textContent = `The Dance Times — ${formatYM(ym)} 公演スケジュール`;
+    // 印刷用ページタイトル
+    const printTitle = document.getElementById('print-page-title');
+    if (printTitle) printTitle.textContent = `舞踊公演案内　${formatYM(ym)}`;
 
     const btnPrev = document.getElementById('btn-prev');
     const btnNext = document.getElementById('btn-next');
@@ -604,8 +712,7 @@
     const container = document.getElementById('schedule-container');
     container.innerHTML = `<div class="state-box"><div class="api-loading"><div class="api-spinner"></div>公演情報を読み込み中</div></div>`;
     try {
-      const printFlag = isPrint ? '&print=true' : '';
-      const res = await fetch(`${API_BASE}/performances?month=${ym}${printFlag}`);
+      const res = await fetch(`${API_BASE}/performances?month=${ym}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       performances = await res.json();
       renderSchedule();
@@ -614,18 +721,16 @@
     }
   }
 
-  // ── 印刷用ページ ──────────────────────────────────────────────────────────
+  // ── 印刷用ページを別タブで開く ────────────────────────────────────────────
   function openPrintPage() {
     const ym  = availableMonths[currentMonthIdx];
-    const url = `/schedule.html?month=${ym}&print=true`;
-    window.open(url, '_blank');
+    window.open(`/schedule.html?month=${ym}&print=true`, '_blank');
   }
 
   // ── 初期化 ────────────────────────────────────────────────────────────────
   async function init() {
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // 月リスト取得
     try {
       const res = await fetch(`${API_BASE}/performances/month-list`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -649,9 +754,10 @@
     if (urlMonth && availableMonths.includes(urlMonth)) {
       currentMonthIdx = availableMonths.indexOf(urlMonth);
     } else {
-      // 当月または直近の月を初期表示
-      const today = new Date();
-      const thisYM = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+      const thisYM = (() => {
+        const t = new Date();
+        return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+      })();
       const idx = availableMonths.findIndex(m => m >= thisYM);
       currentMonthIdx = idx >= 0 ? idx : availableMonths.length - 1;
     }
@@ -659,9 +765,9 @@
     updateMonthNav();
     await loadMonth(availableMonths[currentMonthIdx]);
 
-    // 印刷モードは自動印刷
+    // 印刷モード：読み込み完了後に自動印刷
     if (isPrint) {
-      window.onload = () => window.print();
+      window.addEventListener('load', () => window.print());
     }
   }
 

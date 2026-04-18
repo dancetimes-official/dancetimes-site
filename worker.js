@@ -12,11 +12,12 @@
  */
 
 const SPREADSHEET_ID = "1Y-aDLAMwD-OTW6vfAr0oRUTdKVlddOWNaiNU_O2M9y0";
+const PERFORMANCES_SPREADSHEET_ID = "1-dH5HnAQXPfkvr5hfUktCw1I1Bkb5IsVNmiig6Hsst0";
 const SCOPES = "https://www.googleapis.com/auth/spreadsheets";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
@@ -45,10 +46,11 @@ const ARCHIVE_SHEET = {
 
 const PERFORMANCES_SHEET = {
   name: "Performances",
-  range: "A:L",
+  range: "A:N",
   columns: [
     "title", "company", "venue", "date_start", "date_end",
     "price", "ticket_on_sale", "official_url", "notes", "published", "source_url", "created_at",
+    "performance_times", "cast",
   ],
 };
 
@@ -293,7 +295,7 @@ export default {
         const created_at = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
         const row = [title, company, venue, date_start, date_end, price, ticket_on_sale, official_url, notes, published, source_url, created_at];
         const accessToken  = await getAccessToken(env);
-        const appendResult = await appendSheetRow(accessToken, PERFORMANCES_SHEET.name, row);
+        const appendResult = await appendPerformanceSheetRow(accessToken, PERFORMANCES_SHEET.name, row);
         const updatedRange = appendResult?.updates?.updatedRange ?? "";
         const rowMatch     = updatedRange.match(/!A(\d+)/);
         const rowIndex     = rowMatch ? parseInt(rowMatch[1], 10) : null;
@@ -325,7 +327,7 @@ export default {
         } = body;
         const row         = [title, company, venue, date_start, date_end, price, ticket_on_sale, official_url, notes, published, source_url, created_at];
         const accessToken = await getAccessToken(env);
-        await updateSheetRow(accessToken, PERFORMANCES_SHEET.name, rowIndex, row);
+        await updatePerformanceSheetRow(accessToken, PERFORMANCES_SHEET.name, rowIndex, row);
         return jsonResponse({ success: true });
       } catch (err) {
         return jsonResponse({ error: err.message }, 500);
@@ -378,12 +380,12 @@ export default {
       }
 
       if (pathname === "/performances/all") {
-        const rows = await fetchSheetData(accessToken, PERFORMANCES_SHEET);
+        const rows = await fetchPerformanceSheetData(accessToken, PERFORMANCES_SHEET);
         return jsonResponse(parsePerformanceRows(rows, { includeAll: true }));
       }
 
       if (pathname === "/performances/month-list") {
-        const rows  = await fetchSheetData(accessToken, PERFORMANCES_SHEET);
+        const rows  = await fetchPerformanceSheetData(accessToken, PERFORMANCES_SHEET);
         const perfs = parsePerformanceRows(rows);
         const months = [...new Set(
           perfs.flatMap(p => {
@@ -407,7 +409,7 @@ export default {
         const perfUrl    = new URL(request.url);
         const monthParam = perfUrl.searchParams.get("month");
         const printParam = perfUrl.searchParams.get("print") === "true";
-        const rows       = await fetchSheetData(accessToken, PERFORMANCES_SHEET);
+        const rows       = await fetchPerformanceSheetData(accessToken, PERFORMANCES_SHEET);
         let   perfs      = parsePerformanceRows(rows, { print: printParam });
 
         if (monthParam) {
@@ -733,6 +735,62 @@ async function updateSheetRow(accessToken, sheetName, rowIndex, row) {
 }
 
 // ───────────────────────────────────────────
+// Performances Sheets API（別スプレッドシート）
+// ───────────────────────────────────────────
+
+async function fetchPerformanceSheetData(accessToken, sheet) {
+  const range = encodeURIComponent(`${sheet.name}!${sheet.range}`);
+  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${PERFORMANCES_SPREADSHEET_ID}/values/${range}`;
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Sheets API error (${sheet.name}): ${res.status} ${body}`);
+  }
+  const data = await res.json();
+  return data.values ?? [];
+}
+
+async function appendPerformanceSheetRow(accessToken, sheetName, row) {
+  const range = encodeURIComponent(`${sheetName}!A1`);
+  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${PERFORMANCES_SPREADSHEET_ID}/values/${range}:append` +
+                `?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const res = await fetch(url, {
+    method:  "POST",
+    headers: {
+      Authorization:  `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ values: [row] }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Sheets append error (${sheetName}): ${res.status} ${body}`);
+  }
+  return res.json();
+}
+
+async function updatePerformanceSheetRow(accessToken, sheetName, rowIndex, row) {
+  const range = encodeURIComponent(`${sheetName}!A${rowIndex}`);
+  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${PERFORMANCES_SPREADSHEET_ID}/values/${range}` +
+                `?valueInputOption=USER_ENTERED`;
+  const res = await fetch(url, {
+    method:  "PUT",
+    headers: {
+      Authorization:  `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ values: [row] }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Sheets update error (${sheetName} row ${rowIndex}): ${res.status} ${body}`);
+  }
+  return res.json();
+}
+
+// ───────────────────────────────────────────
 // Performances helpers
 // ───────────────────────────────────────────
 
@@ -753,13 +811,15 @@ function parsePerformanceRows(rows, options = {}) {
     if (!includeAll && published !== "published") continue;
 
     const obj = {
-      title:      get(row, "title"),
-      company:    get(row, "company"),
-      venue:      get(row, "venue"),
-      date_start: get(row, "date_start"),
-      date_end:   get(row, "date_end"),
-      price:      get(row, "price"),
-      notes:      get(row, "notes"),
+      title:             get(row, "title"),
+      company:           get(row, "company"),
+      venue:             get(row, "venue"),
+      date_start:        get(row, "date_start"),
+      date_end:          get(row, "date_end"),
+      price:             get(row, "price"),
+      notes:             get(row, "notes"),
+      performance_times: get(row, "performance_times"),
+      cast:              get(row, "cast"),
       published,
     };
 
@@ -780,7 +840,7 @@ function parsePerformanceRows(rows, options = {}) {
 }
 
 async function getSheetId(accessToken, sheetName) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?fields=sheets.properties`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${PERFORMANCES_SPREADSHEET_ID}?fields=sheets.properties`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -797,7 +857,7 @@ async function getSheetId(accessToken, sheetName) {
 async function deleteSheetRow(accessToken, sheetName, rowIndex) {
   const sheetId    = await getSheetId(accessToken, sheetName);
   const startIndex = rowIndex - 1; // 0-based for API
-  const url        = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`;
+  const url        = `https://sheets.googleapis.com/v4/spreadsheets/${PERFORMANCES_SPREADSHEET_ID}:batchUpdate`;
   const res = await fetch(url, {
     method:  "POST",
     headers: {
