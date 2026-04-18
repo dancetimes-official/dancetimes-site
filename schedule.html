@@ -318,158 +318,252 @@
     .print-only { display: none; }
     .print-footer-text { display: none; }
 
-    /* ===== PRINT STYLES ===== */
-    @media print {
-      /* --- 表示切り替え --- */
-      .no-print  { display: none !important; }
-      .print-only { display: block !important; }
+    /* ===== PRINT-MODE クラス（?print=true 時に JS で付与）===== */
+    body.print-mode {
+      background: #fff;
+      color: #000;
+      font-size: 10pt;
+      font-family: 'Noto Serif JP', serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    body.print-mode header.site-header,
+    body.print-mode .page-title-bar,
+    body.print-mode .month-nav-bar,
+    body.print-mode footer .footer-copy,
+    body.print-mode footer .footer-links { display: none !important; }
 
-      /* --- ページ設定 --- */
+    body.print-mode .print-only { display: block !important; }
+    body.print-mode .print-footer-text { display: block !important; }
+
+    /* 印刷用ページヘッダー */
+    body.print-mode .print-page-header {
+      text-align: center;
+      margin-bottom: 8pt;
+    }
+    body.print-mode .print-page-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 16pt;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: #000;
+      display: block;
+      line-height: 1.5;
+    }
+    body.print-mode .print-page-brand {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 11pt;
+      font-weight: 400;
+      color: #000;
+      display: block;
+      margin-bottom: 6pt;
+    }
+    body.print-mode .print-page-rule {
+      border: none;
+      border-top: 1px solid #000;
+      margin: 0;
+    }
+
+    /* 2段組みレイアウト */
+    body.print-mode .schedule-list {
+      display: block;
+      column-count: 2;
+      column-gap: 8mm;
+    }
+
+    /* 日付グループ */
+    body.print-mode .date-group {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      margin-bottom: 6pt;
+    }
+    body.print-mode .date-group-head {
+      display: flex;
+      align-items: baseline;
+      gap: 0;
+      padding: 2pt 0;
+      border-top: none;
+      border-bottom: 1px solid #000;
+      margin-bottom: 0;
+    }
+    body.print-mode .date-day {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 12pt;
+      font-weight: bold;
+      color: #000;
+      min-width: auto;
+      line-height: 1.3;
+    }
+    body.print-mode .date-weekday {
+      font-size: 12pt;
+      font-weight: bold;
+      color: #000;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    body.print-mode .date-group--sat .date-day,
+    body.print-mode .date-group--sat .date-weekday,
+    body.print-mode .date-group--sun .date-day,
+    body.print-mode .date-group--sun .date-weekday,
+    body.print-mode .date-group--hol .date-day,
+    body.print-mode .date-group--hol .date-weekday { color: #000; }
+
+    /* 公演行 */
+    body.print-mode .perf-list { list-style: none; }
+    body.print-mode .perf-item {
+      padding: 3pt 0;
+      border-bottom: 1px dotted #ccc;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      background: transparent !important;
+    }
+    body.print-mode .perf-item:last-child { border-bottom: none; }
+    body.print-mode .perf-main {
+      display: grid;
+      grid-template-columns: 46pt 1fr auto;
+      grid-template-rows: auto auto;
+      column-gap: 4pt;
+      align-items: baseline;
+      flex-direction: unset;
+    }
+    body.print-mode .perf-time {
+      grid-column: 1; grid-row: 1;
+      order: unset;
+      font-family: 'DM Mono', monospace;
+      font-size: 9pt;
+      color: #333;
+      letter-spacing: 0;
+      margin-top: 0;
+    }
+    body.print-mode .perf-time:empty { visibility: hidden; }
+    body.print-mode .perf-title {
+      grid-column: 2; grid-row: 1;
+      order: unset;
+      font-size: 10pt;
+      font-weight: bold;
+      color: #000;
+      line-height: 1.3;
+    }
+    body.print-mode .perf-venue-print {
+      grid-column: 3; grid-row: 1;
+      display: block;
+      order: unset;
+      text-align: right;
+      font-family: 'DM Mono', monospace;
+      font-size: 8.5pt;
+      color: #333;
+    }
+    body.print-mode .perf-cast {
+      grid-column: 2 / 4; grid-row: 2;
+      order: unset;
+      font-size: 9pt;
+      color: #555;
+      margin-top: 0;
+      line-height: 1.3;
+    }
+    body.print-mode .perf-cast:empty { display: none; }
+    body.print-mode .perf-submeta { display: none; }
+
+    /* ページフッター */
+    body.print-mode .print-footer-text {
+      display: block;
+      font-size: 8pt;
+      color: #666;
+      text-align: center;
+      margin-top: 10pt;
+      padding-top: 4pt;
+      border-top: 1px solid #ccc;
+    }
+
+    /* ===== @media print ===== */
+    @media print {
       @page {
         size: A4 portrait;
-        margin: 15mm 12mm;
+        margin: 12mm 10mm;
       }
 
       body {
         font-size: 10pt;
         color: #000;
         background: #fff;
+        font-family: 'Noto Serif JP', serif;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
 
-      /* --- ヘッダー・ナビ非表示 --- */
-      header.site-header { position: static; border: none; background: transparent; }
-      nav.site-nav { display: none; }
-      .page-title-bar { display: none; }
-      .month-nav-bar  { display: none; }
+      .no-print { display: none !important; }
+      header.site-header,
+      .page-title-bar,
+      .month-nav-bar,
       footer .footer-copy,
-      footer .footer-links { display: none; }
+      footer .footer-links { display: none !important; }
 
-      /* --- 印刷用ページヘッダー --- */
-      .print-page-header {
-        text-align: center;
-        margin-bottom: 10pt;
-      }
+      .print-only { display: block !important; }
+      .print-footer-text { display: block !important; }
+
+      .print-page-header { text-align: center; margin-bottom: 8pt; }
       .print-page-title {
         font-family: 'Noto Serif JP', serif;
         font-size: 16pt;
-        font-weight: 400;
-        letter-spacing: 0.12em;
+        font-weight: 500;
+        letter-spacing: 0.1em;
         color: #000;
         display: block;
-        margin-bottom: 4pt;
+        line-height: 1.5;
       }
-      .print-page-rule {
-        border: none;
-        border-top: 0.75pt solid #000;
-        margin: 0;
+      .print-page-brand {
+        font-family: 'Noto Serif JP', serif;
+        font-size: 11pt;
+        font-weight: 400;
+        color: #000;
+        display: block;
+        margin-bottom: 6pt;
       }
+      .print-page-rule { border: none; border-top: 1px solid #000; margin: 0; }
 
-      /* --- 日付グループ --- */
-      .schedule-list { display: block; }
-      .date-group { margin-bottom: 6pt; page-break-inside: avoid; }
+      .schedule-list { display: block; column-count: 2; column-gap: 8mm; }
+
+      .date-group { break-inside: avoid; page-break-inside: avoid; margin-bottom: 6pt; }
       .date-group-head {
-        display: flex; align-items: baseline; gap: 5pt;
-        padding: 3pt 0 2pt;
-        border-top: none;
-        border-bottom: 0.5pt solid #000;
+        display: flex; align-items: baseline; gap: 0;
+        padding: 2pt 0;
+        border-top: none; border-bottom: 1px solid #000;
         margin-bottom: 0;
       }
-      .date-day {
-        font-family: 'Noto Serif JP', serif;
-        font-size: 12pt;
-        font-weight: 400;
-        min-width: auto;
-        line-height: 1.2;
-      }
-      .date-weekday {
-        font-family: 'DM Mono', monospace;
-        font-size: 9pt;
-        letter-spacing: 0;
-        text-transform: none;
-      }
-      /* 曜日色はそのまま継承（--sat / --sun は印刷でも有効） */
-      .date-group--sat .date-day,
-      .date-group--sat .date-weekday { color: #1a56a0; }
-      .date-group--sun .date-day,
-      .date-group--sun .date-weekday,
-      .date-group--hol .date-day,
-      .date-group--hol .date-weekday  { color: #a02020; }
+      .date-day { font-size: 12pt; font-weight: bold; color: #000; min-width: auto; line-height: 1.3; }
+      .date-weekday { font-size: 12pt; font-weight: bold; color: #000; letter-spacing: 0; text-transform: none; }
+      .date-group--sat .date-day, .date-group--sat .date-weekday,
+      .date-group--sun .date-day, .date-group--sun .date-weekday,
+      .date-group--hol .date-day, .date-group--hol .date-weekday { color: #000; }
 
-      /* --- 公演行：時間 | 公演名 | 会場 グリッド --- */
-      .perf-list  { list-style: none; }
-      .perf-item  {
-        display: block;
-        padding: 2pt 0;
-        border-bottom: 0.3pt solid #ddd;
-        page-break-inside: avoid;
+      .perf-list { list-style: none; }
+      .perf-item {
+        padding: 3pt 0;
+        border-bottom: 1px dotted #ccc;
+        break-inside: avoid; page-break-inside: avoid;
         background: transparent !important;
       }
       .perf-item:last-child { border-bottom: none; }
-
       .perf-main {
         display: grid;
-        grid-template-columns: 52pt 1fr 130pt;
-        column-gap: 5pt;
+        grid-template-columns: 46pt 1fr auto;
+        grid-template-rows: auto auto;
+        column-gap: 4pt;
         align-items: baseline;
         flex-direction: unset;
       }
-
-      /* グリッド配置を上書き */
-      .perf-time {
-        grid-area: 1 / 1;
-        order: unset;
-        font-family: 'DM Mono', monospace;
-        font-size: 9pt;
-        color: #333;
-        letter-spacing: 0;
-        margin-top: 0;
-      }
-      .perf-time:empty { visibility: hidden; display: block; }
-
-      .perf-title {
-        grid-area: 1 / 2;
-        order: unset;
-        font-size: 10pt;
-        font-weight: bold;
-        color: #000;
-        line-height: 1.3;
-      }
-
-      .perf-venue-print {
-        grid-area: 1 / 3;
-        display: block;
-        order: unset;
-        text-align: right;
-        font-family: 'DM Mono', monospace;
-        font-size: 8.5pt;
-        color: #333;
-      }
-
-      .perf-cast {
-        grid-area: 2 / 2 / 2 / 4;
-        order: unset;
-        font-size: 8pt;
-        color: #555;
-        font-style: italic;
-        margin-top: 0;
-        line-height: 1.3;
-      }
+      .perf-time { grid-column: 1; grid-row: 1; font-family: 'DM Mono', monospace; font-size: 9pt; color: #333; letter-spacing: 0; margin-top: 0; }
+      .perf-time:empty { visibility: hidden; }
+      .perf-title { grid-column: 2; grid-row: 1; font-size: 10pt; font-weight: bold; color: #000; line-height: 1.3; }
+      .perf-venue-print { grid-column: 3; grid-row: 1; display: block; text-align: right; font-family: 'DM Mono', monospace; font-size: 8.5pt; color: #333; }
+      .perf-cast { grid-column: 2 / 4; grid-row: 2; font-size: 9pt; color: #555; margin-top: 0; line-height: 1.3; }
       .perf-cast:empty { display: none; }
-
-      /* サブメタ（会社名・会場・料金）は印刷では非表示 */
       .perf-submeta { display: none; }
 
-      /* --- フッター --- */
       .print-footer-text {
-        display: block;
-        font-size: 8pt;
-        color: #666;
-        text-align: center;
-        margin-top: 10pt;
-        padding-top: 4pt;
-        border-top: 0.5pt solid #ccc;
+        display: block; font-size: 8pt; color: #666;
+        text-align: center; margin-top: 10pt;
+        padding-top: 4pt; border-top: 1px solid #ccc;
       }
     }
 
@@ -507,6 +601,7 @@
     <!-- ===== 印刷用ページヘッダー（画面では非表示）===== -->
     <div class="print-only print-page-header">
       <span class="print-page-title" id="print-page-title"></span>
+      <span class="print-page-brand">The Dance Times</span>
       <hr class="print-page-rule" />
     </div>
 
@@ -556,7 +651,7 @@
           <a href="/#all-articles">全記事一覧</a>
           <a href="/schedule.html">Schedule</a>
         </nav>
-        <div class="print-footer-text">© The Dance Times</div>
+        <div class="print-footer-text">© The Dance Times　dance-times.com</div>
       </div>
     </div>
   </footer>
@@ -587,6 +682,7 @@
   let currentMonthIdx = 0;
   let performances    = [];
   const isPrint = new URLSearchParams(location.search).get('print') === 'true';
+  if (isPrint) document.body.classList.add('print-mode');
 
   // ── ユーティリティ ────────────────────────────────────────────────────────
   function esc(s) {
