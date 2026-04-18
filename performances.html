@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>公演情報管理 | The Dance Times</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Serif+JP:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== TOKENS ===== */
+    :root {
+      --bg:           #f7f6f3;
+      --bg-card:      #ffffff;
+      --border:       #e0ddd8;
+      --text:         #1a1a1a;
+      --text-sub:     #777068;
+      --accent:       #6ec9c1;
+      --accent-dark:  #3a9e96;
+      --accent-soft:  rgba(110,201,193,0.13);
+      --gold:         #c9a96e;
+      --danger:       #c0392b;
+      --danger-soft:  rgba(192,57,43,0.08);
+      --warn:         #e67e22;
+      --warn-soft:    rgba(230,126,34,0.10);
+      --radius:       2px;
+      --shadow:       0 2px 24px rgba(0,0,0,0.07);
+      --shadow-lg:    0 8px 48px rgba(0,0,0,0.10);
+      --font-display: 'Cormorant Garamond', 'Noto Serif JP', serif;
+      --font-body:    'Noto Serif JP', serif;
+      --font-mono:    'DM Mono', monospace;
+      --max-w:        900px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    input, textarea, select {
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    /* ===== LAYOUT ===== */
+    .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ===== HEADER ===== */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(247,246,243,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 14px 0; gap: 16px;
+    }
+    .logo {
+      display: flex; align-items: baseline; gap: 10px;
+      flex-shrink: 0;
+    }
+    .logo-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .header-subtitle {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--text-sub);
+    }
+
+    /* ===== TABS ===== */
+    .tabs-bar {
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .tabs-inner {
+      display: flex; gap: 0;
+    }
+    .tab-btn {
+      padding: 14px 24px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover { color: var(--accent-dark); }
+    .tab-btn.active {
+      color: var(--accent-dark);
+      border-bottom-color: var(--accent);
+    }
+    .tab-panel { display: none; padding: 32px 0; }
+    .tab-panel.active { display: block; }
+
+    /* ===== FORM ELEMENTS ===== */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+    }
+    .form-label .required {
+      color: var(--danger);
+      margin-left: 4px;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus { border-color: var(--accent); }
+    .form-textarea { resize: vertical; min-height: 120px; }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 20px;
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid var(--accent);
+      box-shadow: 0 4px 16px rgba(110,201,193,0.3);
+    }
+    .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .btn-danger {
+      background: var(--bg-card);
+      color: var(--danger);
+      border: 1px solid rgba(192,57,43,0.3);
+    }
+    .btn-danger:hover { background: var(--danger-soft); }
+    .btn-success {
+      background: var(--accent-dark);
+      color: #fff;
+      border: 1px solid var(--accent-dark);
+    }
+    .btn-success:hover { background: #2e8077; border-color: #2e8077; transform: translateY(-1px); }
+    .btn:disabled {
+      opacity: 0.5; cursor: not-allowed; transform: none !important;
+    }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+    /* ===== STEP / FLOW ===== */
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .step-heading {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin-bottom: 4px;
+    }
+    .step-sub {
+      font-size: 0.83rem;
+      color: var(--text-sub);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* ===== STATUS / ALERTS ===== */
+    .alert {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 0.83rem;
+      margin-bottom: 16px;
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .alert-warn  { background: var(--warn-soft);   border: 1px solid rgba(230,126,34,0.3); color: #7a4510; }
+    .alert-error { background: var(--danger-soft); border: 1px solid rgba(192,57,43,0.3); color: var(--danger); }
+    .alert-info  { background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--accent-dark); }
+
+    .status-msg {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      color: var(--text-sub);
+      padding: 8px 0;
+    }
+
+    /* ===== LOADING ===== */
+    .api-loading {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      letter-spacing: 0.12em; color: var(--text-sub);
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 0;
+    }
+    .api-spinner {
+      width: 16px; height: 16px; flex-shrink: 0;
+      border: 2px solid var(--accent); border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== CONFIRM CARD ===== */
+    .confirm-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .confirm-card-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    /* ===== PERFORMANCES LIST (tab③) ===== */
+    .perf-table { width: 100%; border-collapse: collapse; }
+    .perf-table th {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      padding: 8px 10px;
+      border-bottom: 2px solid var(--border);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .perf-table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      font-size: 0.85rem;
+    }
+    .perf-table tr:hover td { background: var(--accent-soft); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .badge-pub   { background: var(--accent-soft); color: var(--accent-dark); }
+    .badge-draft { background: rgba(119,112,104,0.12); color: var(--text-sub); }
+
+    .action-btns { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+    }
+
+    /* ===== INLINE EDIT ===== */
+    .inline-edit-row td { background: rgba(110,201,193,0.06) !important; }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      display: flex; gap: 10px; align-items: center;
+      flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .filter-input {
+      flex: 1 1 200px; max-width: 320px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .filter-input:focus { border-color: var(--accent); }
+    .filter-chips { display: flex; gap: 6px; }
+    .filter-chip {
+      padding: 5px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      letter-spacing: 0.06em;
+      color: var(--text-sub);
+      transition: all 0.15s;
+    }
+    .filter-chip:hover, .filter-chip.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+    }
+
+    /* ===== PDF ITEM ===== */
+    .pdf-result-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .pdf-item-head {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .pdf-item-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 400;
+    }
+
+    /* ===== MODAL / OVERLAY ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 28px;
+      max-width: 460px; width: 90%;
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-bottom: 10px;
+    }
+    .modal-body {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ===== FOOTER ===== */
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .footer-inner {
+      padding: 16px 0;
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      color: var(--text-sub);
+      letter-spacing: 0.08em;
+    }
+
+    /* ===== MISC ===== */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+    .text-sub { color: var(--text-sub); font-size: 0.83rem; }
+    .mt-8  { margin-top: 8px;  }
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+
+    @media (max-width: 640px) {
+      .wrap { padding: 0 16px; }
+      .tab-btn { padding: 12px 14px; font-size: 0.6rem; }
+      .perf-table { font-size: 0.78rem; }
+      .perf-table th, .perf-table td { padding: 8px 6px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+  <!-- ===== HEADER ===== -->
+  <header>
+    <div class="wrap">
+      <div class="header-inner">
+        <div class="logo">
+          <span class="logo-title">The Dance Times</span>
+        </div>
+        <span class="header-subtitle">公演情報管理ポータル</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== TABS BAR ===== -->
+  <div class="tabs-bar">
+    <div class="wrap">
+      <div class="tabs-inner">
+        <button class="tab-btn active" data-tab="tab-url">URLから取り込む</button>
+        <button class="tab-btn"        data-tab="tab-pdf">PDFから取り込む</button>
+        <button class="tab-btn"        data-tab="tab-list">公演一覧・管理</button>
+      </div>
+    </div>
+  </div>
+
+  <main style="flex:1;">
+    <div class="wrap">
+
+      <!-- ============================= TAB① URL ============================= -->
+      <div class="tab-panel active" id="tab-url">
+
+        <!-- STEP 1: URL入力 -->
+        <div class="step active" id="url-step1">
+          <h2 class="step-heading">URLから取り込む</h2>
+          <p class="step-sub">公式サイトのURLを入力すると、公演情報を自動で抽出します。</p>
+          <div class="form-group">
+            <label class="form-label" for="url-input">公式サイトURL</label>
+            <input type="url" id="url-input" class="form-input" placeholder="https://..." />
+          </div>
+          <div id="url-status" class="status-msg" hidden></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-fetch-url">取り込む</button>
+          </div>
+        </div>
+
+        <!-- STEP 2a: テキスト貼り付け -->
+        <div class="step" id="url-step2a">
+          <div class="alert alert-warn">
+            ⚠️ URLからの自動取得ができませんでした。公式サイトから公演情報のテキストをコピーして以下に貼り付けてください。（不要な情報が混じっていても構いません）
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="paste-text">公演情報テキスト</label>
+            <textarea id="paste-text" class="form-textarea" rows="10" placeholder="公式サイトのテキストをここに貼り付け..."></textarea>
+          </div>
+          <div id="text-status" class="status-msg" hidden></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" id="btn-extract-text">抽出する</button>
+            <button class="btn btn-secondary" id="btn-manual-input">手動で入力する</button>
+            <button class="btn btn-secondary" id="btn-url-reset">← URLを変更</button>
+          </div>
+        </div>
+
+        <!-- STEP 2b: 手動入力 -->
+        <div class="step" id="url-step2b">
+          <h2 class="step-heading">手動入力</h2>
+          <p class="step-sub">公演情報を直接入力してください。</p>
+          <div id="manual-form-container"><!-- renderPerformanceForm() で生成 --></div>
+          <div id="manual-status" class="status-msg" hidden></div>
+          <div class="btn-group" id="manual-btn-group">
+            <button class="btn btn-secondary" id="btn-back-to-url">← 戻る</button>
+            <button class="btn btn-secondary" id="btn-manual-to-confirm">確認画面へ →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: 確認・修正 -->
+        <div class="step" id="url-step3">
+          <h2 class="step-heading">内容を確認・修正</h2>
+          <p class="step-sub">抽出された内容を確認し、必要に応じて修正してください。</p>
+          <div id="url-dup-alert" hidden></div>
+          <div id="confirm-form-container"><!-- renderPerformanceForm() で生成 --></div>
+          <div id="confirm-status" class="status-msg" hidden></div>
+          <div class="btn-group">
+            <button class="btn btn-secondary" id="btn-confirm-draft">保存（下書き）</button>
+            <button class="btn btn-success"   id="btn-confirm-publish">保存して公開</button>
+            <button class="btn btn-secondary" id="btn-confirm-back">← 戻る</button>
+          </div>
+        </div>
+
+      </div><!-- /tab-url -->
+
+      <!-- ============================= TAB② PDF ============================= -->
+      <div class="tab-panel" id="tab-pdf">
+        <h2 class="step-heading">PDFから取り込む</h2>
+        <p class="step-sub">公演フライヤーのPDFから公演情報を自動抽出します。最大5ファイルまで同時処理可能。</p>
+
+        <div class="form-group">
+          <label class="form-label">PDFファイル（最大5ファイル）</label>
+          <input type="file" id="pdf-input" accept="application/pdf" multiple style="display:none" />
+          <button class="btn btn-secondary" onclick="document.getElementById('pdf-input').click()">📂 PDFを選択</button>
+          <div id="pdf-file-list" class="mt-8 text-sub"></div>
+        </div>
+
+        <div id="pdf-status" class="status-msg" hidden></div>
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btn-extract-pdf" disabled>抽出する</button>
+        </div>
+
+        <div id="pdf-results" class="mt-24"></div>
+      </div><!-- /tab-pdf -->
+
+      <!-- ============================= TAB③ LIST ============================= -->
+      <div class="tab-panel" id="tab-list">
+        <div class="filter-bar">
+          <input type="search" class="filter-input" id="list-search" placeholder="公演名・会場で絞り込み" />
+          <div class="filter-chips">
+            <button class="filter-chip active" data-filter="all">全件</button>
+            <button class="filter-chip" data-filter="draft">下書きのみ</button>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btn-reload-list">↻ 再読み込み</button>
+        </div>
+
+        <div id="list-container">
+          <div class="api-loading">
+            <div class="api-spinner"></div> 読み込み中...
+          </div>
+        </div>
+      </div><!-- /tab-list -->
+
+    </div><!-- /wrap -->
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="wrap">
+      <div class="footer-inner">
+        <div class="footer-copy">© <span id="year"></span> The Dance Times — 内部管理ページ</div>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<!-- ===== DELETE CONFIRM MODAL ===== -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box">
+    <div class="modal-title">削除の確認</div>
+    <div class="modal-body" id="delete-modal-body">この公演を削除しますか？この操作は取り消せません。</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeDeleteModal()">キャンセル</button>
+      <button class="btn btn-danger" id="btn-confirm-delete">削除する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DUPLICATE CONFIRM MODAL ===== -->
+<div class="modal-overlay" id="dup-modal">
+  <div class="modal-box">
+    <div class="modal-title">重複の可能性</div>
+    <div class="modal-body" id="dup-modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeDupModal()">キャンセル</button>
+      <button class="btn btn-primary" id="btn-dup-save">重複を承知で保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ユーティリティ
+  // ─────────────────────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showMsg(id, msg, isError = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = isError ? 'var(--danger)' : 'var(--text-sub)';
+    el.hidden = !msg;
+  }
+
+  function setLoading(el, loading, text = '処理中...') {
+    if (!el) return;
+    el.disabled = loading;
+    el.textContent = loading ? text : el.dataset.originalText || el.textContent;
+    if (!loading && el.dataset.originalText) el.textContent = el.dataset.originalText;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // タブ切り替え
+  // ─────────────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'tab-list') loadList();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 公演フォーム生成
+  // ─────────────────────────────────────────────────────────────────────────
+  function renderPerformanceForm(containerId, data = {}) {
+    const d = (key) => esc(data[key] || '');
+    document.getElementById(containerId).innerHTML = `
+      <div class="form-group">
+        <label class="form-label">公演名 <span class="required">*</span></label>
+        <input type="text" class="form-input" name="title" value="${d('title')}" placeholder="例: 新国立劇場バレエ団『ライモンダ』" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">カンパニー / 主催</label>
+          <input type="text" class="form-input" name="company" value="${d('company')}" placeholder="例: 新国立劇場バレエ団" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">会場</label>
+          <input type="text" class="form-input" name="venue" value="${d('venue')}" placeholder="例: 新国立劇場 オペラパレス" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">開始日 <span class="required">*</span></label>
+          <input type="date" class="form-input" name="date_start" value="${d('date_start')}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">終了日</label>
+          <input type="date" class="form-input" name="date_end" value="${d('date_end')}" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">料金</label>
+          <input type="text" class="form-input" name="price" value="${d('price')}" placeholder="例: S席14,850円〜Z席1,650円" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">チケット発売日</label>
+          <input type="date" class="form-input" name="ticket_on_sale" value="${d('ticket_on_sale')}" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">公式サイトURL</label>
+        <input type="url" class="form-input" name="official_url" value="${d('official_url')}" placeholder="https://..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">備考</label>
+        <input type="text" class="form-input" name="notes" value="${d('notes')}" placeholder="例: 上演時間約2時間30分（休憩含む）" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">参照URL（取得元）</label>
+        <input type="url" class="form-input" name="source_url" value="${d('source_url')}" placeholder="https://..." />
+      </div>`;
+  }
+
+  function collectFormData(containerId) {
+    const container = document.getElementById(containerId);
+    const data = {};
+    container.querySelectorAll('[name]').forEach(el => { data[el.name] = el.value.trim(); });
+    return data;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 重複チェック
+  // ─────────────────────────────────────────────────────────────────────────
+  let allPerformancesCache = null;
+
+  async function getAllPerformances() {
+    if (allPerformancesCache) return allPerformancesCache;
+    const res = await fetch(`${API_BASE}/performances/all`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    allPerformancesCache = await res.json();
+    return allPerformancesCache;
+  }
+
+  async function checkDuplicate(title, dateStart) {
+    try {
+      const all = await getAllPerformances();
+      return all.find(p =>
+        p.title.trim() === title.trim() && p.date_start === dateStart
+      ) || null;
+    } catch { return null; }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAB① URL から取り込む
+  // ─────────────────────────────────────────────────────────────────────────
+  let currentSourceUrl = '';
+
+  function showUrlStep(stepId) {
+    document.querySelectorAll('#tab-url .step').forEach(s => s.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+  }
+
+  // 初期化: manual form
+  renderPerformanceForm('manual-form-container');
+
+  // Step 1: URL取り込み
+  document.getElementById('btn-fetch-url').addEventListener('click', async () => {
+    const urlVal = document.getElementById('url-input').value.trim();
+    if (!urlVal) { showMsg('url-status', 'URLを入力してください。', true); return; }
+    currentSourceUrl = urlVal;
+    const btn = document.getElementById('btn-fetch-url');
+    btn.dataset.originalText = '取り込む';
+    setLoading(btn, true, 'Webサイトから情報を取得中...');
+    showMsg('url-status', 'Webサイトから情報を取得中...', false);
+    try {
+      // Step1: HTMLフェッチ
+      const fetchRes = await fetch(`${API_BASE}/performances/fetch-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: urlVal }),
+      });
+      const fetchData = await fetchRes.json();
+
+      if (!fetchData.success) throw new Error('fetch_failed');
+
+      // Step2: AI抽出
+      showMsg('url-status', 'AIが公演情報を解析中...', false);
+      const extractRes = await fetch(`${API_BASE}/ai/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: fetchData.html, type: 'html' }),
+      });
+      const extractData = await extractRes.json();
+
+      if (!extractData.success) throw new Error('extract_failed');
+
+      const extracted = { ...extractData.data, source_url: urlVal };
+      renderPerformanceForm('confirm-form-container', extracted);
+      checkDupAndShowAlert(extracted.title, extracted.date_start, 'url-dup-alert');
+      showUrlStep('url-step3');
+      showMsg('url-status', '', false);
+    } catch (err) {
+      if (err.message === 'api_key_not_configured') {
+        showMsg('url-status', 'AIのAPIキーが未設定です。テキスト貼り付けをお試しください。', true);
+      }
+      setLoading(btn, false);
+      showUrlStep('url-step2a');
+    }
+    setLoading(btn, false);
+  });
+
+  // Step 2a: テキスト抽出
+  document.getElementById('btn-extract-text').addEventListener('click', async () => {
+    const text = document.getElementById('paste-text').value.trim();
+    if (!text) { showMsg('text-status', 'テキストを貼り付けてください。', true); return; }
+    const btn = document.getElementById('btn-extract-text');
+    btn.dataset.originalText = '抽出する';
+    setLoading(btn, true, 'AIが解析中...');
+    showMsg('text-status', 'AIが公演情報を解析中...', false);
+    try {
+      const res = await fetch(`${API_BASE}/ai/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, type: 'text' }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'extract_failed');
+      const extracted = { ...data.data, source_url: currentSourceUrl };
+      renderPerformanceForm('confirm-form-container', extracted);
+      checkDupAndShowAlert(extracted.title, extracted.date_start, 'url-dup-alert');
+      showUrlStep('url-step3');
+      showMsg('text-status', '', false);
+    } catch (err) {
+      if (err.message === 'api_key_not_configured') {
+        showMsg('text-status', 'AIのAPIキーが未設定です。手動入力をお試しください。', true);
+      } else {
+        showMsg('text-status', '抽出に失敗しました。手動で入力してください。', true);
+      }
+      setLoading(btn, false);
+      return;
+    }
+    setLoading(btn, false);
+  });
+
+  document.getElementById('btn-manual-input').addEventListener('click', () => {
+    renderPerformanceForm('manual-form-container', { source_url: currentSourceUrl });
+    showUrlStep('url-step2b');
+  });
+  document.getElementById('btn-url-reset').addEventListener('click', () => showUrlStep('url-step1'));
+  document.getElementById('btn-back-to-url').addEventListener('click', () => showUrlStep('url-step1'));
+  document.getElementById('btn-manual-to-confirm').addEventListener('click', () => {
+    const data = collectFormData('manual-form-container');
+    if (!data.title) { alert('公演名は必須です。'); return; }
+    renderPerformanceForm('confirm-form-container', data);
+    checkDupAndShowAlert(data.title, data.date_start, 'url-dup-alert');
+    showUrlStep('url-step3');
+  });
+
+  // Step 3: 確認・保存
+  async function confirmSave(publishedStatus) {
+    const data = collectFormData('confirm-form-container');
+    if (!data.title) { showMsg('confirm-status', '公演名は必須です。', true); return; }
+    data.published = publishedStatus;
+
+    // 重複確認
+    const dup = await checkDuplicate(data.title, data.date_start);
+    if (dup) {
+      openDupModal(`「${data.title}」（${data.date_start}）がすでに登録されています。このまま保存しますか？`, async () => {
+        await doSavePerformance(data);
+      });
+      return;
+    }
+    await doSavePerformance(data);
+  }
+
+  async function doSavePerformance(data) {
+    const btnDraft   = document.getElementById('btn-confirm-draft');
+    const btnPublish = document.getElementById('btn-confirm-publish');
+    [btnDraft, btnPublish].forEach(b => b.disabled = true);
+    showMsg('confirm-status', '保存中...', false);
+    try {
+      const res = await fetch(`${API_BASE}/performances`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || 'save_failed');
+      allPerformancesCache = null; // キャッシュ破棄
+      showMsg('confirm-status', `保存しました（行 ${result.rowIndex}）`, false);
+      setTimeout(() => {
+        showUrlStep('url-step1');
+        document.getElementById('url-input').value = '';
+        showMsg('confirm-status', '', false);
+        showMsg('url-status', '✓ 公演情報を保存しました。', false);
+      }, 1500);
+    } catch (err) {
+      showMsg('confirm-status', `保存に失敗しました: ${err.message}`, true);
+    }
+    [btnDraft, btnPublish].forEach(b => b.disabled = false);
+  }
+
+  document.getElementById('btn-confirm-draft').addEventListener('click', () => confirmSave('draft'));
+  document.getElementById('btn-confirm-publish').addEventListener('click', () => confirmSave('published'));
+  document.getElementById('btn-confirm-back').addEventListener('click', () => showUrlStep('url-step1'));
+
+  // 重複アラート表示
+  async function checkDupAndShowAlert(title, dateStart, alertId) {
+    const alertEl = document.getElementById(alertId);
+    if (!alertEl) return;
+    if (!title || !dateStart) { alertEl.hidden = true; return; }
+    const dup = await checkDuplicate(title, dateStart);
+    if (dup) {
+      alertEl.innerHTML = `<div class="alert alert-warn">⚠️ 重複の可能性があります。「${esc(dup.title)}」（${esc(dup.date_start)}）がすでに登録されています。</div>`;
+      alertEl.hidden = false;
+    } else {
+      alertEl.hidden = true;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAB② PDF から取り込む
+  // ─────────────────────────────────────────────────────────────────────────
+  let selectedPdfFiles = [];
+
+  document.getElementById('pdf-input').addEventListener('change', (e) => {
+    selectedPdfFiles = Array.from(e.target.files).slice(0, 5);
+    const listEl = document.getElementById('pdf-file-list');
+    if (selectedPdfFiles.length === 0) {
+      listEl.textContent = '';
+      document.getElementById('btn-extract-pdf').disabled = true;
+      return;
+    }
+    listEl.innerHTML = selectedPdfFiles.map(f =>
+      `<div>📄 ${esc(f.name)} <small style="color:var(--text-sub)">(${(f.size/1024).toFixed(0)} KB)</small></div>`
+    ).join('');
+    document.getElementById('btn-extract-pdf').disabled = false;
+  });
+
+  document.getElementById('btn-extract-pdf').addEventListener('click', async () => {
+    if (selectedPdfFiles.length === 0) return;
+    const btn = document.getElementById('btn-extract-pdf');
+    btn.disabled = true;
+    const resultsEl = document.getElementById('pdf-results');
+    resultsEl.innerHTML = '';
+
+    for (let i = 0; i < selectedPdfFiles.length; i++) {
+      const file = selectedPdfFiles[i];
+      showMsg('pdf-status', `PDFを解析中... (${i+1}/${selectedPdfFiles.length})`, false);
+
+      try {
+        const base64 = await fileToBase64(file);
+        const res = await fetch(`${API_BASE}/ai/extract-pdf`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pdf: base64 }),
+        });
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.error || 'extract_failed');
+        const items = Array.isArray(data.data) ? data.data : [data.data];
+        renderPdfResults(resultsEl, items, file.name);
+      } catch (err) {
+        resultsEl.innerHTML += `<div class="alert alert-error">「${esc(file.name)}」の処理に失敗: ${esc(err.message)}</div>`;
+      }
+    }
+
+    showMsg('pdf-status', `${selectedPdfFiles.length}件のPDF処理が完了しました。`, false);
+    btn.disabled = false;
+  });
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderPdfResults(container, items, filename) {
+    const sectionId = `pdf-section-${Date.now()}`;
+    let html = `<div id="${sectionId}">
+      <p style="font-family:var(--font-mono);font-size:0.65rem;letter-spacing:0.1em;color:var(--text-sub);margin-bottom:12px;">
+        📄 ${esc(filename)} — ${items.length}件の公演を抽出
+      </p>`;
+
+    items.forEach((item, idx) => {
+      const itemId = `pdf-item-${Date.now()}-${idx}`;
+      html += `<div class="pdf-result-item" id="${itemId}">
+        <div class="pdf-item-head">
+          <span class="pdf-item-title">${esc(item.title || '（タイトルなし）')}</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="savePdfItem('${itemId}','draft')">下書きで保存</button>
+            <button class="btn btn-success btn-sm"   onclick="savePdfItem('${itemId}','published')">公開して保存</button>
+          </div>
+        </div>`;
+
+      const formId = `pdf-form-${itemId}`;
+      html += `<div id="${formId}"></div>`;
+      html += `<div id="pdf-status-${itemId}" class="status-msg" hidden></div>`;
+      html += `</div>`;
+    });
+
+    html += `<div class="btn-group" style="margin-bottom:16px;">
+      <button class="btn btn-secondary" onclick="saveAllPdfItems('${sectionId}','draft')">全件保存（下書き）</button>
+    </div></div>`;
+
+    container.innerHTML += html;
+
+    // フォームを描画（innerHTML後に実行）
+    items.forEach((item, idx) => {
+      const itemId  = `pdf-item-${Date.now()}-${idx}`;
+      // 上で生成したIDに合わせる処理はできないため、後から取得する方法を使う
+    });
+    // 実際にはDOMに描画後に renderPerformanceForm を呼ぶ
+    items.forEach((item, idx) => {
+      const allItems = container.querySelectorAll('.pdf-result-item');
+      const thisItem = allItems[allItems.length - items.length + idx];
+      if (!thisItem) return;
+      const formContainer = thisItem.querySelector('[id^="pdf-form-"]');
+      if (!formContainer) return;
+      renderPerformanceForm(formContainer.id, item);
+    });
+  }
+
+  async function savePdfItem(itemId, publishedStatus) {
+    const item = document.getElementById(itemId);
+    if (!item) return;
+    const formContainer = item.querySelector('[id^="pdf-form-"]');
+    if (!formContainer) return;
+    const data = collectFormData(formContainer.id);
+    data.published = publishedStatus;
+
+    const statusId = `pdf-status-${itemId}`;
+    const dup = await checkDuplicate(data.title, data.date_start);
+    if (dup) {
+      openDupModal(`「${data.title}」（${data.date_start}）がすでに登録されています。このまま保存しますか？`, async () => {
+        await doSavePdfItem(data, statusId, item);
+      });
+      return;
+    }
+    await doSavePdfItem(data, statusId, item);
+  }
+
+  async function doSavePdfItem(data, statusId, itemEl) {
+    showMsg(statusId, '保存中...', false);
+    try {
+      const res = await fetch(`${API_BASE}/performances`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || 'save_failed');
+      allPerformancesCache = null;
+      showMsg(statusId, `✓ 保存しました（行 ${result.rowIndex}）`, false);
+      itemEl.style.opacity = '0.5';
+      itemEl.querySelectorAll('button').forEach(b => b.disabled = true);
+    } catch (err) {
+      showMsg(statusId, `保存失敗: ${err.message}`, true);
+    }
+  }
+
+  async function saveAllPdfItems(sectionId, publishedStatus) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    const items = section.querySelectorAll('.pdf-result-item');
+    for (const item of items) {
+      if (item.style.opacity === '0.5') continue; // 保存済み
+      const formContainer = item.querySelector('[id^="pdf-form-"]');
+      if (!formContainer) continue;
+      const data = collectFormData(formContainer.id);
+      data.published = publishedStatus;
+      const statusId = item.querySelector('[id^="pdf-status-"]')?.id;
+      await doSavePdfItem(data, statusId, item);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAB③ 公演一覧・管理
+  // ─────────────────────────────────────────────────────────────────────────
+  let listData      = [];
+  let listFilter    = 'all';   // 'all' or 'draft'
+  let listSearch    = '';
+  let editingRowIdx = null;
+
+  async function loadList() {
+    allPerformancesCache = null;
+    const container = document.getElementById('list-container');
+    container.innerHTML = '<div class="api-loading"><div class="api-spinner"></div> 読み込み中...</div>';
+    try {
+      listData = await getAllPerformances();
+      renderList();
+    } catch (err) {
+      container.innerHTML = `<div class="alert alert-error">読み込み失敗: ${esc(err.message)}</div>`;
+    }
+  }
+
+  function renderList() {
+    const container = document.getElementById('list-container');
+    const q = listSearch.toLowerCase();
+
+    let items = listData;
+    if (listFilter === 'draft') items = items.filter(p => p.published !== 'published');
+    if (q) items = items.filter(p =>
+      (p.title  || '').toLowerCase().includes(q) ||
+      (p.venue  || '').toLowerCase().includes(q) ||
+      (p.company|| '').toLowerCase().includes(q)
+    );
+
+    if (items.length === 0) {
+      container.innerHTML = '<p class="text-sub" style="padding:32px 0;text-align:center;">公演情報がありません。</p>';
+      return;
+    }
+
+    let html = `<table class="perf-table">
+      <thead>
+        <tr>
+          <th>状態</th>
+          <th>日程</th>
+          <th>公演名</th>
+          <th>会場</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+    for (const p of items) {
+      const isPub   = p.published === 'published';
+      const isEdit  = editingRowIdx === p.rowIndex;
+      const trClass = isEdit ? ' class="inline-edit-row"' : '';
+
+      html += `<tr${trClass} data-row="${p.rowIndex}">`;
+      html += `<td><span class="badge ${isPub ? 'badge-pub' : 'badge-draft'}">${isPub ? 'PUB' : 'DRAFT'}</span></td>`;
+      html += `<td style="white-space:nowrap;font-family:var(--font-mono);font-size:0.7rem;">${esc(p.date_start)}${p.date_end && p.date_end !== p.date_start ? '<br>〜'+esc(p.date_end) : ''}</td>`;
+
+      if (isEdit) {
+        // インライン編集モード
+        html += `<td colspan="2">
+          <div id="inline-edit-form-${p.rowIndex}"></div>
+        </td>`;
+        html += `<td>
+          <div class="action-btns">
+            <button class="btn btn-success btn-sm"    onclick="saveInlineEdit(${p.rowIndex})">保存</button>
+            <button class="btn btn-secondary btn-sm"  onclick="cancelInlineEdit()">キャンセル</button>
+          </div>
+        </td>`;
+      } else {
+        html += `<td>${esc(p.title)}<br><small style="color:var(--text-sub);font-family:var(--font-mono);font-size:0.62rem;">${esc(p.company)}</small></td>`;
+        html += `<td style="font-size:0.78rem;">${esc(p.venue)}</td>`;
+        html += `<td>
+          <div class="action-btns">
+            ${isPub
+              ? `<button class="btn btn-secondary btn-sm" onclick="togglePublish(${p.rowIndex},'draft')">下書きに戻す</button>`
+              : `<button class="btn btn-primary btn-sm"   onclick="togglePublish(${p.rowIndex},'published')">公開する</button>`
+            }
+            <button class="btn btn-secondary btn-sm" onclick="startInlineEdit(${p.rowIndex})">編集</button>
+            <button class="btn btn-danger btn-sm"    onclick="openDeleteModal(${p.rowIndex},'${esc(p.title)}')">削除</button>
+          </div>
+        </td>`;
+      }
+      html += `</tr>`;
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+
+    // インライン編集フォームの描画
+    if (editingRowIdx !== null) {
+      const editing = listData.find(p => p.rowIndex === editingRowIdx);
+      if (editing) {
+        const formContainerId = `inline-edit-form-${editingRowIdx}`;
+        renderPerformanceForm(formContainerId, editing);
+      }
+    }
+  }
+
+  async function togglePublish(rowIndex, newStatus) {
+    const p = listData.find(x => x.rowIndex === rowIndex);
+    if (!p) return;
+    const data = { ...p, published: newStatus };
+    try {
+      const res = await fetch(`${API_BASE}/performances/${rowIndex}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || 'update_failed');
+      allPerformancesCache = null;
+      await loadList();
+    } catch (err) {
+      alert(`更新に失敗しました: ${err.message}`);
+    }
+  }
+
+  function startInlineEdit(rowIndex) {
+    editingRowIdx = rowIndex;
+    renderList();
+  }
+
+  function cancelInlineEdit() {
+    editingRowIdx = null;
+    renderList();
+  }
+
+  async function saveInlineEdit(rowIndex) {
+    const data = collectFormData(`inline-edit-form-${rowIndex}`);
+    const original = listData.find(p => p.rowIndex === rowIndex);
+    if (original) data.created_at = original.created_at || '';
+    data.published = original?.published || 'draft';
+
+    try {
+      const res = await fetch(`${API_BASE}/performances/${rowIndex}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || 'update_failed');
+      allPerformancesCache = null;
+      editingRowIdx = null;
+      await loadList();
+    } catch (err) {
+      alert(`更新に失敗しました: ${err.message}`);
+    }
+  }
+
+  // リスト絞り込み
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      listFilter = chip.dataset.filter;
+      renderList();
+    });
+  });
+  document.getElementById('list-search').addEventListener('input', e => {
+    listSearch = e.target.value.trim();
+    renderList();
+  });
+  document.getElementById('btn-reload-list').addEventListener('click', loadList);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 削除モーダル
+  // ─────────────────────────────────────────────────────────────────────────
+  let deleteTargetRowIndex = null;
+
+  function openDeleteModal(rowIndex, title) {
+    deleteTargetRowIndex = rowIndex;
+    document.getElementById('delete-modal-body').textContent =
+      `「${title}」を削除しますか？この操作は取り消せません。`;
+    document.getElementById('delete-modal').classList.add('open');
+  }
+
+  function closeDeleteModal() {
+    deleteTargetRowIndex = null;
+    document.getElementById('delete-modal').classList.remove('open');
+  }
+
+  document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+    if (deleteTargetRowIndex === null) return;
+    const btn = document.getElementById('btn-confirm-delete');
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API_BASE}/performances/${deleteTargetRowIndex}`, {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || 'delete_failed');
+      allPerformancesCache = null;
+      closeDeleteModal();
+      await loadList();
+    } catch (err) {
+      alert(`削除に失敗しました: ${err.message}`);
+      btn.disabled = false;
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 重複確認モーダル
+  // ─────────────────────────────────────────────────────────────────────────
+  let dupCallback = null;
+
+  function openDupModal(message, callback) {
+    dupCallback = callback;
+    document.getElementById('dup-modal-body').textContent = message;
+    document.getElementById('dup-modal').classList.add('open');
+  }
+
+  function closeDupModal() {
+    dupCallback = null;
+    document.getElementById('dup-modal').classList.remove('open');
+  }
+
+  document.getElementById('btn-dup-save').addEventListener('click', async () => {
+    document.getElementById('dup-modal').classList.remove('open');
+    if (dupCallback) await dupCallback();
+    dupCallback = null;
+  });
+
+  // モーダル外クリックで閉じる
+  document.getElementById('delete-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeDeleteModal();
+  });
+  document.getElementById('dup-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeDupModal();
+  });
+</script>
+</body>
+</html>

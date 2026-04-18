@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Schedule | The Dance Times</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="バレエ・ダンス公演スケジュール一覧。The Dance Timesがお届けする月別公演カレンダー。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Serif+JP:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ===== TOKENS ===== */
+    :root {
+      --bg:           #f7f6f3;
+      --bg-card:      #ffffff;
+      --border:       #e0ddd8;
+      --text:         #1a1a1a;
+      --text-sub:     #777068;
+      --accent:       #6ec9c1;
+      --accent-dark:  #3a9e96;
+      --accent-soft:  rgba(110,201,193,0.13);
+      --accent-line:  rgba(110,201,193,0.5);
+      --gold:         #c9a96e;
+      --sat:          #1a56a0;
+      --sun:          #a02020;
+      --radius:       2px;
+      --shadow:       0 2px 24px rgba(0,0,0,0.07);
+      --shadow-lg:    0 8px 48px rgba(0,0,0,0.10);
+      --font-display: 'Cormorant Garamond', 'Noto Serif JP', serif;
+      --font-body:    'Noto Serif JP', serif;
+      --font-mono:    'DM Mono', monospace;
+      --max-w:        1080px;
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+    /* ===== LAYOUT ===== */
+    .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ===== HEADER ===== */
+    header.site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(247,246,243,0.95);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 16px 0; gap: 20px;
+    }
+    .logo {
+      display: flex; align-items: baseline; gap: 10px;
+      flex-shrink: 0;
+    }
+    .logo-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+    }
+    nav.site-nav {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      align-items: center;
+    }
+    nav.site-nav a {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      transition: color 0.15s;
+    }
+    nav.site-nav a:hover { color: var(--accent-dark); }
+    nav.site-nav a.active {
+      color: var(--accent-dark);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 2px;
+    }
+
+    /* ===== PAGE TITLE ===== */
+    .page-title-bar {
+      padding: 32px 0 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-dark);
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .page-eyebrow::before {
+      content: ''; display: block;
+      width: 24px; height: 1px;
+      background: var(--accent);
+    }
+    .page-h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 2.8vw, 2.2rem);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      color: var(--text);
+    }
+
+    /* ===== MONTH NAV ===== */
+    .month-nav-bar {
+      padding: 20px 0;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 12px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    .month-nav {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .month-nav-btn {
+      width: 34px; height: 34px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .month-nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-dark); }
+    .month-nav-btn:disabled { opacity: 0.3; cursor: default; }
+    .month-label {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      min-width: 140px; text-align: center;
+    }
+    .print-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .print-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+    /* ===== SCHEDULE LIST ===== */
+    .schedule-section { padding: 32px 0; flex: 1; }
+    .schedule-list { display: flex; flex-direction: column; gap: 0; }
+
+    .date-group { margin-bottom: 12px; }
+    .date-group-head {
+      display: flex; align-items: baseline; gap: 12px;
+      padding: 10px 0 8px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 0;
+    }
+    .date-day {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 300;
+      line-height: 1;
+      min-width: 44px;
+    }
+    .date-weekday {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .date-group--sat .date-day,
+    .date-group--sat .date-weekday { color: var(--sat); }
+    .date-group--sun .date-day,
+    .date-group--sun .date-weekday { color: var(--sun); }
+    .date-group--hol .date-day,
+    .date-group--hol .date-weekday { color: var(--sun); }
+
+    .perf-list { list-style: none; }
+    .perf-item {
+      display: flex; align-items: baseline;
+      gap: 16px; flex-wrap: wrap;
+      padding: 10px 8px;
+      border-bottom: 1px dotted var(--border);
+      border-radius: var(--radius);
+      transition: background 0.12s;
+    }
+    .perf-item:last-child { border-bottom: none; }
+    .perf-item:hover { background: var(--accent-soft); }
+    .perf-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      flex: 1;
+      min-width: 180px;
+    }
+    .perf-company {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-sub);
+      letter-spacing: 0.04em;
+    }
+    .perf-venue {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      letter-spacing: 0.04em;
+    }
+    .perf-price {
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      color: var(--text-sub);
+      white-space: nowrap;
+    }
+    .perf-official {
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      color: var(--accent-dark);
+      letter-spacing: 0.04em;
+    }
+    .perf-official a {
+      color: var(--accent-dark);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .perf-onsale {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      color: var(--text-sub);
+    }
+
+    /* ===== PREMIUM PLACEHOLDER ===== */
+    .premium-notice {
+      margin: 8px 8px 4px;
+      padding: 8px 14px;
+      background: rgba(201,169,110,0.08);
+      border: 1px dashed rgba(201,169,110,0.4);
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+    }
+
+    /* ===== LOADING / ERROR / EMPTY ===== */
+    .state-box {
+      padding: 48px 24px; text-align: center;
+    }
+    .api-loading {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      letter-spacing: 0.12em; color: var(--text-sub);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .api-spinner {
+      width: 16px; height: 16px; flex-shrink: 0;
+      border: 2px solid var(--accent); border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .api-error {
+      font-size: 0.85rem; color: var(--text-sub);
+      border: 1px dashed var(--border); border-radius: var(--radius);
+      padding: 32px; display: inline-block;
+    }
+    .api-empty {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      letter-spacing: 0.08em; color: var(--text-sub);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      background: var(--bg-card);
+    }
+    .footer-inner {
+      padding: 20px 0;
+      display: flex; flex-wrap: wrap;
+      justify-content: space-between; align-items: center;
+      gap: 12px;
+    }
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      letter-spacing: 0.08em;
+    }
+    .footer-links {
+      display: flex; gap: 20px; flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.63rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--accent-dark); }
+
+    /* ===== PRINT HEADER (non-print hidden) ===== */
+    .print-only { display: none; }
+
+    /* ===== PRINT STYLES ===== */
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      header.site-header { position: static; }
+      nav.site-nav { display: none; }
+      .month-nav-bar .print-btn { display: none; }
+      .month-nav-btn { display: none; }
+      body { font-size: 11pt; color: #000; background: #fff; }
+      .page-title-bar { border: none; padding-bottom: 4pt; }
+      .date-group-head { border-bottom: 1pt solid #000; }
+      .date-day { font-size: 13pt; }
+      .date-weekday { font-size: 9pt; }
+      .perf-item { page-break-inside: avoid; }
+      footer .footer-copy,
+      footer .footer-links { display: none; }
+      .print-footer-text {
+        display: block;
+        font-size: 8pt;
+        color: #555;
+        text-align: center;
+        padding-top: 8pt;
+        border-top: 0.5pt solid #ccc;
+      }
+      @page { size: A4 portrait; margin: 18mm 15mm; }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 640px) {
+      .wrap { padding: 0 16px; }
+      .header-inner { gap: 12px; }
+      nav.site-nav { gap: 14px; }
+      .perf-item { gap: 8px; }
+      .month-nav-bar { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="page">
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header no-print">
+    <div class="wrap">
+      <div class="header-inner">
+        <a href="/" class="logo">
+          <span class="logo-title">The Dance Times</span>
+          <span class="logo-sub">Dance Review</span>
+        </a>
+        <nav class="site-nav" aria-label="サイトナビゲーション">
+          <a href="/">Home</a>
+          <a href="/articles.html">Articles</a>
+          <a href="/schedule.html" class="active">Schedule</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===== PAGE TITLE ===== -->
+    <div class="page-title-bar">
+      <div class="wrap">
+        <div class="print-only" id="print-header-title" style="margin-bottom:8px;font-family:var(--font-display);font-size:1.3rem;font-weight:400;letter-spacing:0.06em;"></div>
+        <div class="page-eyebrow no-print">Performance Schedule</div>
+        <h1 class="page-h1 no-print">公演スケジュール</h1>
+      </div>
+    </div>
+
+    <!-- ===== MONTH NAV ===== -->
+    <div class="month-nav-bar">
+      <div class="wrap" style="width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div class="month-nav">
+          <button class="month-nav-btn no-print" id="btn-prev" aria-label="前月" disabled>←</button>
+          <div class="month-label" id="month-label">読み込み中...</div>
+          <button class="month-nav-btn no-print" id="btn-next" aria-label="翌月" disabled>→</button>
+        </div>
+        <button class="print-btn no-print" id="btn-print" onclick="openPrintPage()">🖨 印刷用ページを開く</button>
+      </div>
+    </div>
+
+    <!-- ===== SCHEDULE LIST ===== -->
+    <section class="schedule-section">
+      <div class="wrap">
+        <div id="schedule-container" class="schedule-list">
+          <div class="state-box">
+            <div class="api-loading">
+              <div class="api-spinner"></div>
+              公演情報を読み込み中
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="wrap">
+      <div class="footer-inner">
+        <div class="footer-copy">© <span id="year"></span> The Dance Times</div>
+        <nav class="footer-links no-print">
+          <a href="/#about">このサイトについて</a>
+          <a href="/#categories">カテゴリ</a>
+          <a href="/#all-articles">全記事一覧</a>
+          <a href="/schedule.html">Schedule</a>
+        </nav>
+        <div class="print-footer-text">© The Dance Times | dance-times.com</div>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /page -->
+
+<script>
+  const API_BASE = 'https://dancetimes-worker.dancetimesofficial.workers.dev';
+
+  // ── 祝日リスト（簡易版、必要に応じて拡張） ──────────────────────────────
+  const HOLIDAYS_2026 = new Set([
+    "2026-01-01","2026-01-12","2026-02-11","2026-02-23","2026-03-20",
+    "2026-04-29","2026-05-03","2026-05-04","2026-05-05","2026-05-06",
+    "2026-07-20","2026-08-11","2026-09-21","2026-09-22","2026-09-23",
+    "2026-10-12","2026-11-03","2026-11-23","2026-12-23",
+    // 2025
+    "2025-01-01","2025-01-13","2025-02-11","2025-02-23","2025-03-20",
+    "2025-04-29","2025-05-03","2025-05-04","2025-05-05","2025-05-06",
+    "2025-07-21","2025-08-11","2025-09-15","2025-09-23","2025-10-13",
+    "2025-11-03","2025-11-24",
+  ]);
+
+  function isHoliday(dateStr) { return HOLIDAYS_2026.has(dateStr); }
+
+  // ── 状態 ──────────────────────────────────────────────────────────────────
+  let availableMonths = [];
+  let currentMonthIdx = 0;
+  let performances    = [];
+  const isPrint = new URLSearchParams(location.search).get('print') === 'true';
+
+  // ── ユーティリティ ────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatYM(ym) {
+    const [y, m] = ym.split('-');
+    return `${y}年${parseInt(m)}月`;
+  }
+
+  function dateStr(yyyy, mm, dd) {
+    return `${yyyy}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+  }
+
+  // 指定月の全日付リストを返す（YYYY-MM-DD）
+  function daysInMonth(ym) {
+    const [y, m] = ym.split('-').map(Number);
+    const count  = new Date(y, m, 0).getDate();
+    const days   = [];
+    for (let d = 1; d <= count; d++) days.push(dateStr(y, m, d));
+    return days;
+  }
+
+  function weekdayClass(dateString) {
+    const d = new Date(dateString + 'T00:00:00');
+    if (isHoliday(dateString)) return 'hol';
+    if (d.getDay() === 0) return 'sun';
+    if (d.getDay() === 6) return 'sat';
+    return '';
+  }
+
+  const WEEKDAYS_JA = ['日','月','火','水','木','金','土'];
+  function weekdayLabel(dateString) {
+    const d = new Date(dateString + 'T00:00:00');
+    let label = WEEKDAYS_JA[d.getDay()];
+    if (isHoliday(dateString)) label += '・祝';
+    return label;
+  }
+
+  // ── 公演リスト描画 ────────────────────────────────────────────────────────
+  function renderSchedule() {
+    const container  = document.getElementById('schedule-container');
+    const currentYM  = availableMonths[currentMonthIdx];
+    const days       = daysInMonth(currentYM);
+
+    // 各日付にまたがる公演を展開
+    const dayMap = new Map(); // dateStr -> performance[]
+    for (const day of days) {
+      const perfs = performances.filter(p => {
+        const start = p.date_start || '';
+        const end   = p.date_end   || start;
+        return start <= day && end >= day;
+      });
+      if (perfs.length > 0) dayMap.set(day, perfs);
+    }
+
+    if (dayMap.size === 0) {
+      container.innerHTML = `<div class="state-box"><div class="api-empty">この月の公演情報はまだ登録されていません。</div></div>`;
+      return;
+    }
+
+    let html = '';
+    for (const [day, perfs] of dayMap) {
+      const d       = new Date(day + 'T00:00:00');
+      const dayNum  = d.getDate();
+      const wdClass = weekdayClass(day);
+      const wdLabel = weekdayLabel(day);
+      const groupClass = wdClass ? ` date-group--${wdClass}` : '';
+
+      html += `<div class="date-group${groupClass}">`;
+      html += `<div class="date-group-head">
+        <span class="date-day">${dayNum}</span>
+        <span class="date-weekday">${wdLabel}</span>
+      </div>`;
+      html += `<ul class="perf-list">`;
+
+      for (const p of perfs) {
+        html += `<li class="perf-item">
+          <span class="perf-title">${esc(p.title)}</span>`;
+
+        if (p.company) {
+          html += `<span class="perf-company">${esc(p.company)}</span>`;
+        }
+        if (p.venue) {
+          html += `<span class="perf-venue">${esc(p.venue)}</span>`;
+        }
+        if (p.price) {
+          html += `<span class="perf-price">${esc(p.price)}</span>`;
+        }
+
+        if (!isPrint) {
+          if (p.ticket_on_sale) {
+            html += `<span class="perf-onsale">発売: ${esc(p.ticket_on_sale)}</span>`;
+          }
+          if (p.official_url) {
+            html += `<span class="perf-official"><a href="${esc(p.official_url)}" target="_blank" rel="noopener">公式サイト ↗</a></span>`;
+          }
+        }
+
+        html += `</li>`;
+      }
+
+      html += `</ul>`;
+
+      if (!isPrint) {
+        html += `<div class="premium-notice no-print">🔒 チケット発売日・公式サイトはプレミアム会員向けに準備中です</div>`;
+      }
+
+      html += `</div>`;
+    }
+
+    container.innerHTML = html;
+  }
+
+  // ── 月ナビゲーション更新 ──────────────────────────────────────────────────
+  function updateMonthNav() {
+    const ym    = availableMonths[currentMonthIdx];
+    const label = document.getElementById('month-label');
+    if (label) label.textContent = formatYM(ym);
+
+    // 印刷用ヘッダー
+    const printTitle = document.getElementById('print-header-title');
+    if (printTitle) printTitle.textContent = `The Dance Times — ${formatYM(ym)} 公演スケジュール`;
+
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    if (btnPrev) btnPrev.disabled = currentMonthIdx <= 0;
+    if (btnNext) btnNext.disabled = currentMonthIdx >= availableMonths.length - 1;
+  }
+
+  async function loadMonth(ym) {
+    const container = document.getElementById('schedule-container');
+    container.innerHTML = `<div class="state-box"><div class="api-loading"><div class="api-spinner"></div>公演情報を読み込み中</div></div>`;
+    try {
+      const printFlag = isPrint ? '&print=true' : '';
+      const res = await fetch(`${API_BASE}/performances?month=${ym}${printFlag}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      performances = await res.json();
+      renderSchedule();
+    } catch (err) {
+      container.innerHTML = `<div class="state-box"><div class="api-error">公演情報の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
+    }
+  }
+
+  // ── 印刷用ページ ──────────────────────────────────────────────────────────
+  function openPrintPage() {
+    const ym  = availableMonths[currentMonthIdx];
+    const url = `/schedule.html?month=${ym}&print=true`;
+    window.open(url, '_blank');
+  }
+
+  // ── 初期化 ────────────────────────────────────────────────────────────────
+  async function init() {
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // 月リスト取得
+    try {
+      const res = await fetch(`${API_BASE}/performances/month-list`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      availableMonths = await res.json();
+    } catch (err) {
+      document.getElementById('schedule-container').innerHTML =
+        `<div class="state-box"><div class="api-error">月一覧の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
+      document.getElementById('month-label').textContent = 'エラー';
+      return;
+    }
+
+    if (availableMonths.length === 0) {
+      document.getElementById('month-label').textContent = 'データなし';
+      document.getElementById('schedule-container').innerHTML =
+        `<div class="state-box"><div class="api-empty">公演情報がまだ登録されていません。</div></div>`;
+      return;
+    }
+
+    // URLパラメータで月指定があれば優先
+    const urlMonth = new URLSearchParams(location.search).get('month');
+    if (urlMonth && availableMonths.includes(urlMonth)) {
+      currentMonthIdx = availableMonths.indexOf(urlMonth);
+    } else {
+      // 当月または直近の月を初期表示
+      const today = new Date();
+      const thisYM = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+      const idx = availableMonths.findIndex(m => m >= thisYM);
+      currentMonthIdx = idx >= 0 ? idx : availableMonths.length - 1;
+    }
+
+    updateMonthNav();
+    await loadMonth(availableMonths[currentMonthIdx]);
+
+    // 印刷モードは自動印刷
+    if (isPrint) {
+      window.onload = () => window.print();
+    }
+  }
+
+  // ── ナビボタン ────────────────────────────────────────────────────────────
+  document.getElementById('btn-prev').addEventListener('click', async () => {
+    if (currentMonthIdx > 0) {
+      currentMonthIdx--;
+      updateMonthNav();
+      await loadMonth(availableMonths[currentMonthIdx]);
+    }
+  });
+
+  document.getElementById('btn-next').addEventListener('click', async () => {
+    if (currentMonthIdx < availableMonths.length - 1) {
+      currentMonthIdx++;
+      updateMonthNav();
+      await loadMonth(availableMonths[currentMonthIdx]);
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>
