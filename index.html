@@ -780,6 +780,7 @@
     </div>
 
     <!-- ===== LATEST ARTICLES (dynamic) ===== -->
+    <!--
     <section class="section" id="articles-section">
       <div class="wrap">
         <div id="articles-grid" class="articles-grid">
@@ -792,6 +793,7 @@
         </div>
       </div>
     </section>
+    -->
 
     <!-- ===== CATEGORIES ===== -->
     <section class="section" id="categories">
@@ -1015,6 +1017,7 @@
   }
 
   // ── 最新記事セクション ─────────────────────────────────────────────────────
+  /* COMMENTED OUT: 最新記事グリッド（カード12件表示）
   const DEFAULT_IMG = 'assets/logo.png';
   const MAX_CARDS   = 12;
 
@@ -1068,6 +1071,7 @@
     }
     grid.innerHTML = filtered.slice(0, MAX_CARDS).map(renderCard).join('');
   }
+  */
 
   function renderHeroPanel() {
     const list = document.getElementById('panel-list');
@@ -1114,13 +1118,13 @@
         const db = b.publishDate || b.timestamp || '';
         return db.localeCompare(da);
       });
-      renderGrid();
+      // renderGrid();  // COMMENTED OUT: 最新記事グリッド
       renderHeroPanel();
       renderCatGrid();
       refreshArchiveView();
     } catch (err) {
-      document.getElementById('articles-grid').innerHTML =
-        `<div class="api-state"><div class="api-error">記事の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
+      // document.getElementById('articles-grid').innerHTML =  // COMMENTED OUT: 最新記事グリッド
+      //   `<div class="api-state"><div class="api-error">記事の読み込みに失敗しました。<br><small>${esc(err.message)}</small></div></div>`;
       ['cat-list-best','cat-list-review','cat-list-report','cat-list-en'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '<li class="cat-item"><span style="color:var(--text-sub);font-size:0.8rem">読み込み失敗</span></li>';
@@ -1366,7 +1370,7 @@
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip--active'));
       chip.classList.add('chip--active');
       currentCat = chip.dataset.cat;
-      renderGrid();
+      // renderGrid();  // COMMENTED OUT: 最新記事グリッド
     });
   });
 
@@ -1374,7 +1378,7 @@
   document.getElementById('search-input').addEventListener('input', e => {
     currentSearch = e.target.value.trim();
     arcPage = 1;
-    renderGrid();
+    // renderGrid();  // COMMENTED OUT: 最新記事グリッド
     renderArchive();
   });
   document.getElementById('search-input').addEventListener('keydown', e => {
