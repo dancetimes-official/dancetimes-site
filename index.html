@@ -975,6 +975,7 @@
   let arcData       = [];     // allArchive + allArticles の結合（全記事一覧用）
   let currentCat    = 'all';
   let currentSearch = '';
+  const CAT_LABELS  = { all:'すべて', best:'月間ベスト', review:'舞台評', report:'レポート', en:'English' };
   let arcYear       = 'all';  // ロード後に最新年に更新
   let arcMonth      = 'all';  // 数値 or 'all'
   let arcYearLocked = false;  // ユーザーが年を手動選択したらtrue
@@ -1227,9 +1228,14 @@
     const q = currentSearch.toLowerCase();
     let items = arcData;
 
+    // カテゴリフィルタ（検索・年月フィルタと併用可）
+    if (currentCat !== 'all') {
+      items = items.filter(a => getCatKey(a) === currentCat);
+    }
+
     // フィルタリング
     if (q) {
-      items = arcData.filter(a => {
+      items = items.filter(a => {
         const text = [a.title, a.category, a.author, a.venue].join(' ').toLowerCase();
         return text.includes(q);
       });
@@ -1272,7 +1278,12 @@
       groups.get(key).push(item);
     }
 
-    const prefix = q ? `<p class="arc-search-note">「${esc(currentSearch)}」に一致: ${total}件</p>` : '';
+    let prefix = '';
+    if (q) {
+      prefix = `<p class="arc-search-note">「${esc(currentSearch)}」に一致: ${total}件${currentCat !== 'all' ? `（${esc(CAT_LABELS[currentCat])}）` : ''}</p>`;
+    } else if (currentCat !== 'all') {
+      prefix = `<p class="arc-search-note">カテゴリ: ${esc(CAT_LABELS[currentCat])} — ${total}件</p>`;
+    }
     container.innerHTML = prefix + [...groups.entries()].map(([label, groupItems]) => `
       <div class="arc-group-head">
         <span class="arc-group-title">${esc(label)}</span>
@@ -1369,7 +1380,9 @@
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip--active'));
       chip.classList.add('chip--active');
       currentCat = chip.dataset.cat;
-      // renderGrid();  // COMMENTED OUT: 最新記事グリッド
+      arcPage = 1;
+      renderArchive();
+      document.getElementById('all-articles').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
 
