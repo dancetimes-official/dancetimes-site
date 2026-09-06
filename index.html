@@ -259,28 +259,6 @@
     .search-box input:focus { border-color: var(--accent); }
     .search-box input::placeholder { color: var(--text-sub); }
 
-    .chips {
-      display: flex; flex-wrap: wrap; gap: 6px;
-    }
-    .chip {
-      padding: 5px 12px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--bg-card);
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-sub);
-      transition: all 0.15s;
-    }
-    .chip:hover, .chip--active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent-dark);
-      font-weight: 600;
-    }
-
     /* ===== SECTIONS ===== */
     .section { padding: 32px 0; }
     .section + .section { border-top: 1px solid var(--border); }
@@ -764,13 +742,6 @@
               placeholder="公演名・カンパニー名・劇場名などで検索"
               aria-label="記事検索" id="search-input" />
           </div>
-          <div class="chips" role="group" aria-label="カテゴリフィルタ">
-            <button class="chip chip--active" data-cat="all">すべて</button>
-            <button class="chip" data-cat="best">月間ベスト</button>
-            <button class="chip" data-cat="review">舞台評</button>
-            <button class="chip" data-cat="report">レポート</button>
-            <button class="chip" data-cat="en">English</button>
-          </div>
         </div>
       </div>
     </div>
@@ -862,6 +833,14 @@
             </div>
           </div>
           <div class="arc-filter-row" id="arc-month-row" hidden></div>
+          <div class="arc-filter-row" id="arc-cat-row" role="group" aria-label="カテゴリフィルタ">
+            <span class="arc-filter-label">Category</span>
+            <button class="arc-chip arc-chip--active" data-cat="all">すべて</button>
+            <button class="arc-chip" data-cat="best">月間ベスト</button>
+            <button class="arc-chip" data-cat="review">舞台評</button>
+            <button class="arc-chip" data-cat="report">レポート</button>
+            <button class="arc-chip" data-cat="en">English</button>
+          </div>
         </div>
 
         <div id="archive-list">
@@ -1375,10 +1354,10 @@
   }
 
   // ── カテゴリ chip フィルタ ─────────────────────────────────────────────────
-  document.querySelectorAll('.chip').forEach(chip => {
+  document.querySelectorAll('#arc-cat-row .arc-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('chip--active'));
-      chip.classList.add('chip--active');
+      document.querySelectorAll('#arc-cat-row .arc-chip').forEach(c => c.classList.remove('arc-chip--active'));
+      chip.classList.add('arc-chip--active');
       currentCat = chip.dataset.cat;
       arcPage = 1;
       renderArchive();
